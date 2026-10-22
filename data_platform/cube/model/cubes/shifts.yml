@@ -1,0 +1,69 @@
+cubes:
+  - name: shifts
+    sql: SELECT * FROM bakery.shifts WHERE NOT _is_deleted
+    data_source: default
+    refresh_key:
+      every: 1 minute
+    joins:
+      - name: branches
+        sql: '{CUBE}.branch_id = {branches.branch_id}'
+        relationship: many_to_one
+      - name: employees
+        sql: '{CUBE}.employee_id = {employees.employee_id}'
+        relationship: many_to_one
+    dimensions:
+      - name: shift_id
+        sql: shift_id
+        type: number
+        primary_key: true
+      - name: branch_id
+        sql: branch_id
+        type: number
+      - name: employee_id
+        sql: employee_id
+        type: number
+      - name: shift_code
+        sql: shift_code
+        type: string
+      - name: opened_at
+        sql: opened_at
+        type: time
+      - name: closed_at
+        sql: closed_at
+        type: time
+      - name: opening_cash
+        sql: opening_cash
+        type: number
+      - name: counted_cash
+        sql: counted_cash
+        type: number
+      - name: status
+        sql: status
+        type: string
+      - name: notes
+        sql: notes
+        type: string
+      - name: _created_at
+        sql: _created_at
+        type: time
+      - name: _last_updated_at
+        sql: _last_updated_at
+        type: time
+      - name: _is_deleted
+        sql: _is_deleted
+        type: boolean
+      - name: _deleted_at
+        sql: _deleted_at
+        type: time
+    measures:
+      - name: count
+        type: count
+      - name: opening_cash_total
+        type: sum
+        sql: opening_cash
+      - name: counted_cash_total
+        type: sum
+        sql: counted_cash
+      - name: cash_variance
+        type: sum
+        sql: '{CUBE}.counted_cash - {CUBE}.opening_cash'

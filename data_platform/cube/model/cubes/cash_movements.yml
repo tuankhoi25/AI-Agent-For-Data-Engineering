@@ -1,0 +1,82 @@
+cubes:
+  - name: cash_movements
+    sql: SELECT * FROM bakery.cash_movements WHERE NOT _is_deleted
+    data_source: default
+    refresh_key:
+      every: 1 minute
+    joins:
+      - name: employees
+        sql: '{CUBE}.recorded_by = {employees.employee_id}'
+        relationship: many_to_one
+      - name: sales
+        sql: '{CUBE}.sale_id = {sales.sale_id}'
+        relationship: many_to_one
+      - name: shifts
+        sql: '{CUBE}.shift_id = {shifts.shift_id}'
+        relationship: many_to_one
+    dimensions:
+      - name: cash_movement_id
+        sql: cash_movement_id
+        type: number
+        primary_key: true
+      - name: shift_id
+        sql: shift_id
+        type: number
+      - name: movement_type
+        sql: movement_type
+        type: string
+      - name: amount
+        sql: amount
+        type: number
+      - name: occurred_at
+        sql: occurred_at
+        type: time
+      - name: sale_id
+        sql: sale_id
+        type: number
+      - name: recorded_by
+        sql: recorded_by
+        type: number
+      - name: description
+        sql: description
+        type: string
+      - name: _created_at
+        sql: _created_at
+        type: time
+      - name: _last_updated_at
+        sql: _last_updated_at
+        type: time
+      - name: _is_deleted
+        sql: _is_deleted
+        type: boolean
+      - name: _deleted_at
+        sql: _deleted_at
+        type: time
+    measures:
+      - name: count
+        type: count
+      - name: cash_in_amount
+        type: sum
+        sql: CASE WHEN {CUBE}.movement_type IN ('FLOAT_IN', 'SALE_CASH_IN', 'OTHER_IN') THEN {CUBE}.amount ELSE 0 END
+      - name: cash_out_amount
+        type: sum
+        sql: CASE WHEN {CUBE}.movement_type IN ('CASH_OUT', 'REFUND_OUT', 'OTHER_OUT') THEN {CUBE}.amount ELSE 0 END
+      - name: net_cash_movement
+        type: sum
+        sql: CASE WHEN {CUBE}.movement_type IN ('FLOAT_IN', 'SALE_CASH_IN', 'OTHER_IN') THEN {CUBE}.amount ELSE -{CUBE}.amount
+          END
+    pre_aggregations:
+      - name: cash_movements_by_day
+        type: rollup
+        refresh_key:
+          every: 1 minute
+        measures:
+          - CUBE.count
+          - CUBE.cash_in_amount
+          - CUBE.cash_out_amount
+          - CUBE.net_cash_movement
+        dimensions:
+          - shifts.branch_id
+          - CUBE.movement_type
+        time_dimension: CUBE.occurred_at
+        granularity: day

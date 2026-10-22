@@ -1,0 +1,66 @@
+cubes:
+  - name: purchase_orders
+    sql: SELECT * FROM bakery.purchase_orders WHERE NOT _is_deleted
+    data_source: default
+    refresh_key:
+      every: 1 minute
+    joins:
+      - name: branches
+        sql: '{CUBE}.branch_id = {branches.branch_id}'
+        relationship: many_to_one
+      - name: employees
+        sql: '{CUBE}.created_by = {employees.employee_id}'
+        relationship: many_to_one
+      - name: suppliers
+        sql: '{CUBE}.supplier_id = {suppliers.supplier_id}'
+        relationship: many_to_one
+    dimensions:
+      - name: purchase_order_id
+        sql: purchase_order_id
+        type: number
+        primary_key: true
+      - name: po_number
+        sql: po_number
+        type: string
+      - name: supplier_id
+        sql: supplier_id
+        type: number
+      - name: branch_id
+        sql: branch_id
+        type: number
+      - name: ordered_at
+        sql: ordered_at
+        type: time
+      - name: expected_at
+        sql: expected_at
+        type: time
+      - name: status
+        sql: status
+        type: string
+      - name: currency_code
+        sql: currency_code
+        type: string
+      - name: notes
+        sql: notes
+        type: string
+      - name: created_by
+        sql: created_by
+        type: number
+      - name: _created_at
+        sql: _created_at
+        type: time
+      - name: _last_updated_at
+        sql: _last_updated_at
+        type: time
+      - name: _is_deleted
+        sql: _is_deleted
+        type: boolean
+      - name: _deleted_at
+        sql: _deleted_at
+        type: time
+    measures:
+      - name: count
+        type: count
+      - name: open_orders
+        type: sum
+        sql: CASE WHEN {CUBE}.status IN ('DRAFT', 'SENT', 'PARTIALLY_RECEIVED') THEN 1 ELSE 0 END

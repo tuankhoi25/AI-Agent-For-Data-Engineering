@@ -1,0 +1,68 @@
+selectors:
+  - name: dimensions_reference
+    description: Shared reference and calendar dimensions, owned by one child DAG.
+    definition:
+      union:
+        - method: fqn
+          value: dim_allergens
+        - method: fqn
+          value: dim_product_categories
+        - method: fqn
+          value: dim_units_of_measure
+        - method: fqn
+          value: dim_suppliers
+        - method: fqn
+          value: dim_promotions
+        - method: fqn
+          value: dim_date
+  - name: dimensions_parties
+    definition:
+      union:
+        - method: fqn
+          value: dim_branches
+        - method: fqn
+          value: dim_customers
+        - method: fqn
+          value: dim_employees
+  - name: dimensions_products
+    definition:
+      union:
+        - method: fqn
+          value: dim_stock_items
+        - method: fqn
+          value: dim_inventory_lots
+        - method: fqn
+          value: dim_products
+        - method: fqn
+          value: dim_recipes
+  - name: facts_sales
+    definition:
+      union:
+        - method: fqn
+          value: fct_sales
+        - method: fqn
+          value: fct_sale_items
+  - name: facts_weather
+    definition:
+      method: fqn
+      value: fct_daily_weather
+  - name: marts_sales
+    definition:
+      union:
+        - method: fqn
+          value: mart_daily_sales
+        - method: fqn
+          value: mart_product_sales
+        - method: fqn
+          value: mart_customer_360
+  - name: marts_operations
+    definition:
+      union:
+        - method: fqn
+          value: mart_inventory_position
+        - method: fqn
+          value: mart_procurement_status
+        - method: fqn
+          value: mart_daily_operations
+        - method: fqn
+          value: mart_cash_reconciliation

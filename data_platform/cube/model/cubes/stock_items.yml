@@ -1,0 +1,60 @@
+cubes:
+  - name: stock_items
+    sql: SELECT * FROM bakery.stock_items WHERE NOT _is_deleted
+    data_source: default
+    refresh_key:
+      every: 1 minute
+    joins:
+      - name: units_of_measure
+        sql: '{CUBE}.base_uom_id = {units_of_measure.uom_id}'
+        relationship: many_to_one
+    dimensions:
+      - name: stock_item_id
+        sql: stock_item_id
+        type: number
+        primary_key: true
+      - name: stock_item_code
+        sql: stock_item_code
+        type: string
+      - name: stock_item_name
+        sql: stock_item_name
+        type: string
+      - name: item_type
+        sql: item_type
+        type: string
+      - name: base_uom_id
+        sql: base_uom_id
+        type: number
+      - name: track_lot
+        sql: track_lot
+        type: boolean
+      - name: track_expiry
+        sql: track_expiry
+        type: boolean
+      - name: reorder_level
+        sql: reorder_level
+        type: number
+      - name: is_active
+        sql: is_active
+        type: boolean
+      - name: notes
+        sql: notes
+        type: string
+      - name: _created_at
+        sql: _created_at
+        type: time
+      - name: _last_updated_at
+        sql: _last_updated_at
+        type: time
+      - name: _is_deleted
+        sql: _is_deleted
+        type: boolean
+      - name: _deleted_at
+        sql: _deleted_at
+        type: time
+    measures:
+      - name: count
+        type: count
+      - name: active_stock_items
+        type: sum
+        sql: CASE WHEN {CUBE}.is_active THEN 1 ELSE 0 END

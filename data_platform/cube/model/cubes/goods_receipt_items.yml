@@ -1,0 +1,88 @@
+cubes:
+  - name: goods_receipt_items
+    sql: SELECT * FROM bakery.goods_receipt_items WHERE NOT _is_deleted
+    data_source: default
+    refresh_key:
+      every: 1 minute
+    joins:
+      - name: goods_receipts
+        sql: '{CUBE}.goods_receipt_id = {goods_receipts.goods_receipt_id}'
+        relationship: many_to_one
+      - name: inventory_lots
+        sql: '{CUBE}.inventory_lot_id = {inventory_lots.inventory_lot_id}'
+        relationship: many_to_one
+      - name: purchase_order_items
+        sql: '{CUBE}.purchase_order_item_id = {purchase_order_items.purchase_order_item_id}'
+        relationship: many_to_one
+      - name: stock_items
+        sql: '{CUBE}.stock_item_id = {stock_items.stock_item_id}'
+        relationship: many_to_one
+      - name: units_of_measure
+        sql: '{CUBE}.uom_id = {units_of_measure.uom_id}'
+        relationship: many_to_one
+    dimensions:
+      - name: goods_receipt_item_id
+        sql: goods_receipt_item_id
+        type: number
+        primary_key: true
+      - name: goods_receipt_id
+        sql: goods_receipt_id
+        type: number
+      - name: purchase_order_item_id
+        sql: purchase_order_item_id
+        type: number
+      - name: stock_item_id
+        sql: stock_item_id
+        type: number
+      - name: inventory_lot_id
+        sql: inventory_lot_id
+        type: number
+      - name: received_quantity_value
+        sql: received_quantity
+        type: number
+      - name: uom_id
+        sql: uom_id
+        type: number
+      - name: actual_unit_cost
+        sql: actual_unit_cost
+        type: number
+      - name: notes
+        sql: notes
+        type: string
+      - name: _created_at
+        sql: _created_at
+        type: time
+      - name: _last_updated_at
+        sql: _last_updated_at
+        type: time
+      - name: _is_deleted
+        sql: _is_deleted
+        type: boolean
+      - name: _deleted_at
+        sql: _deleted_at
+        type: time
+    measures:
+      - name: count
+        type: count
+      - name: received_quantity
+        type: sum
+        sql: received_quantity
+      - name: received_value
+        type: sum
+        sql: '{CUBE}.received_quantity * {CUBE}.actual_unit_cost'
+    pre_aggregations:
+      - name: receipts_by_day
+        type: rollup
+        refresh_key:
+          every: 1 minute
+        measures:
+          - CUBE.count
+          - CUBE.received_quantity
+          - CUBE.received_value
+        dimensions:
+          - suppliers.supplier_name
+          - branches.branch_name
+          - stock_items.stock_item_name
+          - units_of_measure.uom_code
+        time_dimension: goods_receipts.received_at
+        granularity: day

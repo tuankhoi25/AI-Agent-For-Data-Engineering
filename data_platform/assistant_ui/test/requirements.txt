@@ -1,0 +1,2 @@
+# Run Python agent tests in a separate environment from the root MCP tools.
+-r ../agent/requirements.txt

@@ -1,0 +1,66 @@
+cubes:
+  - name: production_consumptions
+    sql: SELECT * FROM bakery.production_consumptions WHERE NOT _is_deleted
+    data_source: default
+    refresh_key:
+      every: 1 minute
+    joins:
+      - name: inventory_lots
+        sql: '{CUBE}.inventory_lot_id = {inventory_lots.inventory_lot_id}'
+        relationship: many_to_one
+      - name: production_batches
+        sql: '{CUBE}.production_batch_id = {production_batches.production_batch_id}'
+        relationship: many_to_one
+      - name: stock_items
+        sql: '{CUBE}.stock_item_id = {stock_items.stock_item_id}'
+        relationship: many_to_one
+      - name: units_of_measure
+        sql: '{CUBE}.uom_id = {units_of_measure.uom_id}'
+        relationship: many_to_one
+    dimensions:
+      - name: production_consumption_id
+        sql: production_consumption_id
+        type: number
+        primary_key: true
+      - name: production_batch_id
+        sql: production_batch_id
+        type: number
+      - name: stock_item_id
+        sql: stock_item_id
+        type: number
+      - name: inventory_lot_id
+        sql: inventory_lot_id
+        type: number
+      - name: quantity_used_value
+        sql: quantity_used
+        type: number
+      - name: uom_id
+        sql: uom_id
+        type: number
+      - name: unit_cost
+        sql: unit_cost
+        type: number
+      - name: notes
+        sql: notes
+        type: string
+      - name: _created_at
+        sql: _created_at
+        type: time
+      - name: _last_updated_at
+        sql: _last_updated_at
+        type: time
+      - name: _is_deleted
+        sql: _is_deleted
+        type: boolean
+      - name: _deleted_at
+        sql: _deleted_at
+        type: time
+    measures:
+      - name: count
+        type: count
+      - name: quantity_used
+        type: sum
+        sql: quantity_used
+      - name: material_cost
+        type: sum
+        sql: '{CUBE}.quantity_used * {CUBE}.unit_cost'

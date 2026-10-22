@@ -1,0 +1,454 @@
+version: 2
+
+models:
+  - name: stg_branches
+    description: Raw operational branch records from bakery.branches.
+    columns:
+      - name: branch_id
+        data_tests: [not_null]
+      - name: _created_at
+        description: "Actual source database insertion time; trigger-managed and immutable. Existing records adopt migration time; not the business event date."
+      - name: _last_updated_at
+        description: "Latest source-row database INSERT/UPDATE time, including soft deletion/restoration. Not commit-order CDC or the refresh time of this derived model or its joined records."
+      - name: _is_deleted
+        description: "Source soft-deletion flag. Raw staging retains both states; core/facts retain the latest tombstone for propagation, while reporting marts filter true. Independent of business status and is_active; no automatic cascade."
+      - name: _deleted_at
+        description: "Time of the current source soft-deletion episode, set when the flag becomes true, preserved while true, NULL after restoration. Not a refund date."
+  - name: stg_product_categories
+    description: Raw operational product categories.
+    columns:
+      - name: category_id
+        data_tests: [not_null]
+      - name: _created_at
+        description: "Actual source database insertion time; trigger-managed and immutable. Existing records adopt migration time; not the business event date."
+      - name: _last_updated_at
+        description: "Latest source-row database INSERT/UPDATE time, including soft deletion/restoration. Not commit-order CDC or the refresh time of this derived model or its joined records."
+      - name: _is_deleted
+        description: "Source soft-deletion flag. Raw staging retains both states; core/facts retain the latest tombstone for propagation, while reporting marts filter true. Independent of business status and is_active; no automatic cascade."
+      - name: _deleted_at
+        description: "Time of the current source soft-deletion episode, set when the flag becomes true, preserved while true, NULL after restoration. Not a refund date."
+  - name: stg_units_of_measure
+    description: Raw operational units of measure.
+    columns:
+      - name: uom_id
+        data_tests: [not_null]
+      - name: _created_at
+        description: "Actual source database insertion time; trigger-managed and immutable. Existing records adopt migration time; not the business event date."
+      - name: _last_updated_at
+        description: "Latest source-row database INSERT/UPDATE time, including soft deletion/restoration. Not commit-order CDC or the refresh time of this derived model or its joined records."
+      - name: _is_deleted
+        description: "Source soft-deletion flag. Raw staging retains both states; core/facts retain the latest tombstone for propagation, while reporting marts filter true. Independent of business status and is_active; no automatic cascade."
+      - name: _deleted_at
+        description: "Time of the current source soft-deletion episode, set when the flag becomes true, preserved while true, NULL after restoration. Not a refund date."
+  - name: stg_suppliers
+    description: Raw operational suppliers.
+    columns:
+      - name: supplier_id
+        data_tests: [not_null]
+      - name: _created_at
+        description: "Actual source database insertion time; trigger-managed and immutable. Existing records adopt migration time; not the business event date."
+      - name: _last_updated_at
+        description: "Latest source-row database INSERT/UPDATE time, including soft deletion/restoration. Not commit-order CDC or the refresh time of this derived model or its joined records."
+      - name: _is_deleted
+        description: "Source soft-deletion flag. Raw staging retains both states; core/facts retain the latest tombstone for propagation, while reporting marts filter true. Independent of business status and is_active; no automatic cascade."
+      - name: _deleted_at
+        description: "Time of the current source soft-deletion episode, set when the flag becomes true, preserved while true, NULL after restoration. Not a refund date."
+  - name: stg_customers
+    description: Raw operational customers and loyalty members.
+    columns:
+      - name: customer_id
+        data_tests: [not_null]
+      - name: _created_at
+        description: "Actual source database insertion time; trigger-managed and immutable. Existing records adopt migration time; not the business event date."
+      - name: _last_updated_at
+        description: "Latest source-row database INSERT/UPDATE time, including soft deletion/restoration. Not commit-order CDC or the refresh time of this derived model or its joined records."
+      - name: _is_deleted
+        description: "Source soft-deletion flag. Raw staging retains both states; core/facts retain the latest tombstone for propagation, while reporting marts filter true. Independent of business status and is_active; no automatic cascade."
+      - name: _deleted_at
+        description: "Time of the current source soft-deletion episode, set when the flag becomes true, preserved while true, NULL after restoration. Not a refund date."
+  - name: stg_employees
+    description: Raw operational employees.
+    columns:
+      - name: employee_id
+        data_tests: [not_null]
+      - name: _created_at
+        description: "Actual source database insertion time; trigger-managed and immutable. Existing records adopt migration time; not the business event date."
+      - name: _last_updated_at
+        description: "Latest source-row database INSERT/UPDATE time, including soft deletion/restoration. Not commit-order CDC or the refresh time of this derived model or its joined records."
+      - name: _is_deleted
+        description: "Source soft-deletion flag. Raw staging retains both states; core/facts retain the latest tombstone for propagation, while reporting marts filter true. Independent of business status and is_active; no automatic cascade."
+      - name: _deleted_at
+        description: "Time of the current source soft-deletion episode, set when the flag becomes true, preserved while true, NULL after restoration. Not a refund date."
+  - name: stg_allergens
+    description: Raw operational allergens.
+    columns:
+      - name: allergen_id
+        data_tests: [not_null]
+      - name: _created_at
+        description: "Actual source database insertion time; trigger-managed and immutable. Existing records adopt migration time; not the business event date."
+      - name: _last_updated_at
+        description: "Latest source-row database INSERT/UPDATE time, including soft deletion/restoration. Not commit-order CDC or the refresh time of this derived model or its joined records."
+      - name: _is_deleted
+        description: "Source soft-deletion flag. Raw staging retains both states; core/facts retain the latest tombstone for propagation, while reporting marts filter true. Independent of business status and is_active; no automatic cascade."
+      - name: _deleted_at
+        description: "Time of the current source soft-deletion episode, set when the flag becomes true, preserved while true, NULL after restoration. Not a refund date."
+  - name: stg_stock_items
+    description: Raw operational stock-item catalog.
+    columns:
+      - name: stock_item_id
+        data_tests: [not_null]
+      - name: _created_at
+        description: "Actual source database insertion time; trigger-managed and immutable. Existing records adopt migration time; not the business event date."
+      - name: _last_updated_at
+        description: "Latest source-row database INSERT/UPDATE time, including soft deletion/restoration. Not commit-order CDC or the refresh time of this derived model or its joined records."
+      - name: _is_deleted
+        description: "Source soft-deletion flag. Raw staging retains both states; core/facts retain the latest tombstone for propagation, while reporting marts filter true. Independent of business status and is_active; no automatic cascade."
+      - name: _deleted_at
+        description: "Time of the current source soft-deletion episode, set when the flag becomes true, preserved while true, NULL after restoration. Not a refund date."
+  - name: stg_products
+    description: Raw operational sellable-product catalog.
+    columns:
+      - name: product_id
+        data_tests: [not_null]
+      - name: _created_at
+        description: "Actual source database insertion time; trigger-managed and immutable. Existing records adopt migration time; not the business event date."
+      - name: _last_updated_at
+        description: "Latest source-row database INSERT/UPDATE time, including soft deletion/restoration. Not commit-order CDC or the refresh time of this derived model or its joined records."
+      - name: _is_deleted
+        description: "Source soft-deletion flag. Raw staging retains both states; core/facts retain the latest tombstone for propagation, while reporting marts filter true. Independent of business status and is_active; no automatic cascade."
+      - name: _deleted_at
+        description: "Time of the current source soft-deletion episode, set when the flag becomes true, preserved while true, NULL after restoration. Not a refund date."
+  - name: stg_weather_daily
+    description: Daily append-only weather observations from the external Open-Meteo source.
+    columns:
+      - name: weather_date
+        data_tests: [not_null]
+      - name: location_code
+        data_tests: [not_null]
+      - name: weather_source
+        data_tests: [not_null]
+      - name: _ingested_at
+        data_tests: [not_null]
+      - name: _source_last_updated_at
+        data_tests: [not_null]
+  - name: stg_supplier_products
+    description: Raw supplier/product bridge.
+    columns:
+      - name: supplier_product_id
+        data_tests: [not_null]
+      - name: _created_at
+        description: "Actual source database insertion time; trigger-managed and immutable. Existing records adopt migration time; not the business event date."
+      - name: _last_updated_at
+        description: "Latest source-row database INSERT/UPDATE time, including soft deletion/restoration. Not commit-order CDC or the refresh time of this derived model or its joined records."
+      - name: _is_deleted
+        description: "Source soft-deletion flag. Raw staging retains both states; core/facts retain the latest tombstone for propagation, while reporting marts filter true. Independent of business status and is_active; no automatic cascade."
+      - name: _deleted_at
+        description: "Time of the current source soft-deletion episode, set when the flag becomes true, preserved while true, NULL after restoration. Not a refund date."
+  - name: stg_product_allergens
+    description: Raw product/allergen bridge.
+    columns:
+      - name: product_id
+        data_tests: [not_null]
+      - name: allergen_id
+        data_tests: [not_null]
+      - name: _created_at
+        description: "Actual source database insertion time; trigger-managed and immutable. Existing records adopt migration time; not the business event date."
+      - name: _last_updated_at
+        description: "Latest source-row database INSERT/UPDATE time, including soft deletion/restoration. Not commit-order CDC or the refresh time of this derived model or its joined records."
+      - name: _is_deleted
+        description: "Source soft-deletion flag. Raw staging retains both states; core/facts retain the latest tombstone for propagation, while reporting marts filter true. Independent of business status and is_active; no automatic cascade."
+      - name: _deleted_at
+        description: "Time of the current source soft-deletion episode, set when the flag becomes true, preserved while true, NULL after restoration. Not a refund date."
+  - name: stg_recipes
+    description: Raw recipe versions.
+    columns:
+      - name: recipe_id
+        data_tests: [not_null]
+      - name: _created_at
+        description: "Actual source database insertion time; trigger-managed and immutable. Existing records adopt migration time; not the business event date."
+      - name: _last_updated_at
+        description: "Latest source-row database INSERT/UPDATE time, including soft deletion/restoration. Not commit-order CDC or the refresh time of this derived model or its joined records."
+      - name: _is_deleted
+        description: "Source soft-deletion flag. Raw staging retains both states; core/facts retain the latest tombstone for propagation, while reporting marts filter true. Independent of business status and is_active; no automatic cascade."
+      - name: _deleted_at
+        description: "Time of the current source soft-deletion episode, set when the flag becomes true, preserved while true, NULL after restoration. Not a refund date."
+  - name: stg_recipe_items
+    description: Raw recipe components.
+    columns:
+      - name: recipe_item_id
+        data_tests: [not_null]
+      - name: _created_at
+        description: "Actual source database insertion time; trigger-managed and immutable. Existing records adopt migration time; not the business event date."
+      - name: _last_updated_at
+        description: "Latest source-row database INSERT/UPDATE time, including soft deletion/restoration. Not commit-order CDC or the refresh time of this derived model or its joined records."
+      - name: _is_deleted
+        description: "Source soft-deletion flag. Raw staging retains both states; core/facts retain the latest tombstone for propagation, while reporting marts filter true. Independent of business status and is_active; no automatic cascade."
+      - name: _deleted_at
+        description: "Time of the current source soft-deletion episode, set when the flag becomes true, preserved while true, NULL after restoration. Not a refund date."
+  - name: stg_purchase_orders
+    description: Raw purchase-order headers.
+    columns:
+      - name: purchase_order_id
+        data_tests: [not_null]
+      - name: _created_at
+        description: "Actual source database insertion time; trigger-managed and immutable. Existing records adopt migration time; not the business event date."
+      - name: _last_updated_at
+        description: "Latest source-row database INSERT/UPDATE time, including soft deletion/restoration. Not commit-order CDC or the refresh time of this derived model or its joined records."
+      - name: _is_deleted
+        description: "Source soft-deletion flag. Raw staging retains both states; core/facts retain the latest tombstone for propagation, while reporting marts filter true. Independent of business status and is_active; no automatic cascade."
+      - name: _deleted_at
+        description: "Time of the current source soft-deletion episode, set when the flag becomes true, preserved while true, NULL after restoration. Not a refund date."
+  - name: stg_purchase_order_items
+    description: Raw purchase-order lines.
+    columns:
+      - name: purchase_order_item_id
+        data_tests: [not_null]
+      - name: _created_at
+        description: "Actual source database insertion time; trigger-managed and immutable. Existing records adopt migration time; not the business event date."
+      - name: _last_updated_at
+        description: "Latest source-row database INSERT/UPDATE time, including soft deletion/restoration. Not commit-order CDC or the refresh time of this derived model or its joined records."
+      - name: _is_deleted
+        description: "Source soft-deletion flag. Raw staging retains both states; core/facts retain the latest tombstone for propagation, while reporting marts filter true. Independent of business status and is_active; no automatic cascade."
+      - name: _deleted_at
+        description: "Time of the current source soft-deletion episode, set when the flag becomes true, preserved while true, NULL after restoration. Not a refund date."
+  - name: stg_goods_receipts
+    description: Raw goods-receipt headers.
+    columns:
+      - name: goods_receipt_id
+        data_tests: [not_null]
+      - name: _created_at
+        description: "Actual source database insertion time; trigger-managed and immutable. Existing records adopt migration time; not the business event date."
+      - name: _last_updated_at
+        description: "Latest source-row database INSERT/UPDATE time, including soft deletion/restoration. Not commit-order CDC or the refresh time of this derived model or its joined records."
+      - name: _is_deleted
+        description: "Source soft-deletion flag. Raw staging retains both states; core/facts retain the latest tombstone for propagation, while reporting marts filter true. Independent of business status and is_active; no automatic cascade."
+      - name: _deleted_at
+        description: "Time of the current source soft-deletion episode, set when the flag becomes true, preserved while true, NULL after restoration. Not a refund date."
+  - name: stg_inventory_lots
+    description: Raw inventory-lot records; not on-hand balances.
+    columns:
+      - name: inventory_lot_id
+        data_tests: [not_null]
+      - name: _created_at
+        description: "Actual source database insertion time; trigger-managed and immutable. Existing records adopt migration time; not the business event date."
+      - name: _last_updated_at
+        description: "Latest source-row database INSERT/UPDATE time, including soft deletion/restoration. Not commit-order CDC or the refresh time of this derived model or its joined records."
+      - name: _is_deleted
+        description: "Source soft-deletion flag. Raw staging retains both states; core/facts retain the latest tombstone for propagation, while reporting marts filter true. Independent of business status and is_active; no automatic cascade."
+      - name: _deleted_at
+        description: "Time of the current source soft-deletion episode, set when the flag becomes true, preserved while true, NULL after restoration. Not a refund date."
+  - name: stg_goods_receipt_items
+    description: Raw goods-receipt lines.
+    columns:
+      - name: goods_receipt_item_id
+        data_tests: [not_null]
+      - name: _created_at
+        description: "Actual source database insertion time; trigger-managed and immutable. Existing records adopt migration time; not the business event date."
+      - name: _last_updated_at
+        description: "Latest source-row database INSERT/UPDATE time, including soft deletion/restoration. Not commit-order CDC or the refresh time of this derived model or its joined records."
+      - name: _is_deleted
+        description: "Source soft-deletion flag. Raw staging retains both states; core/facts retain the latest tombstone for propagation, while reporting marts filter true. Independent of business status and is_active; no automatic cascade."
+      - name: _deleted_at
+        description: "Time of the current source soft-deletion episode, set when the flag becomes true, preserved while true, NULL after restoration. Not a refund date."
+  - name: stg_stock_movements
+    description: Raw signed inventory ledger entries.
+    columns:
+      - name: stock_movement_id
+        data_tests: [not_null]
+      - name: _created_at
+        description: "Actual source database insertion time; trigger-managed and immutable. Existing records adopt migration time; not the business event date."
+      - name: _last_updated_at
+        description: "Latest source-row database INSERT/UPDATE time, including soft deletion/restoration. Not commit-order CDC or the refresh time of this derived model or its joined records."
+      - name: _is_deleted
+        description: "Source soft-deletion flag. Raw staging retains both states; core/facts retain the latest tombstone for propagation, while reporting marts filter true. Independent of business status and is_active; no automatic cascade."
+      - name: _deleted_at
+        description: "Time of the current source soft-deletion episode, set when the flag becomes true, preserved while true, NULL after restoration. Not a refund date."
+  - name: stg_production_batches
+    description: Raw production-batch records.
+    columns:
+      - name: production_batch_id
+        data_tests: [not_null]
+      - name: _created_at
+        description: "Actual source database insertion time; trigger-managed and immutable. Existing records adopt migration time; not the business event date."
+      - name: _last_updated_at
+        description: "Latest source-row database INSERT/UPDATE time, including soft deletion/restoration. Not commit-order CDC or the refresh time of this derived model or its joined records."
+      - name: _is_deleted
+        description: "Source soft-deletion flag. Raw staging retains both states; core/facts retain the latest tombstone for propagation, while reporting marts filter true. Independent of business status and is_active; no automatic cascade."
+      - name: _deleted_at
+        description: "Time of the current source soft-deletion episode, set when the flag becomes true, preserved while true, NULL after restoration. Not a refund date."
+  - name: stg_production_consumptions
+    description: Raw production-consumption records.
+    columns:
+      - name: production_consumption_id
+        data_tests: [not_null]
+      - name: _created_at
+        description: "Actual source database insertion time; trigger-managed and immutable. Existing records adopt migration time; not the business event date."
+      - name: _last_updated_at
+        description: "Latest source-row database INSERT/UPDATE time, including soft deletion/restoration. Not commit-order CDC or the refresh time of this derived model or its joined records."
+      - name: _is_deleted
+        description: "Source soft-deletion flag. Raw staging retains both states; core/facts retain the latest tombstone for propagation, while reporting marts filter true. Independent of business status and is_active; no automatic cascade."
+      - name: _deleted_at
+        description: "Time of the current source soft-deletion episode, set when the flag becomes true, preserved while true, NULL after restoration. Not a refund date."
+  - name: stg_promotions
+    description: Raw promotion configuration.
+    columns:
+      - name: promotion_id
+        data_tests: [not_null]
+      - name: _created_at
+        description: "Actual source database insertion time; trigger-managed and immutable. Existing records adopt migration time; not the business event date."
+      - name: _last_updated_at
+        description: "Latest source-row database INSERT/UPDATE time, including soft deletion/restoration. Not commit-order CDC or the refresh time of this derived model or its joined records."
+      - name: _is_deleted
+        description: "Source soft-deletion flag. Raw staging retains both states; core/facts retain the latest tombstone for propagation, while reporting marts filter true. Independent of business status and is_active; no automatic cascade."
+      - name: _deleted_at
+        description: "Time of the current source soft-deletion episode, set when the flag becomes true, preserved while true, NULL after restoration. Not a refund date."
+  - name: stg_promotion_products
+    description: Raw promotion/product eligibility bridge.
+    columns:
+      - name: promotion_id
+        data_tests: [not_null]
+      - name: product_id
+        data_tests: [not_null]
+      - name: _created_at
+        description: "Actual source database insertion time; trigger-managed and immutable. Existing records adopt migration time; not the business event date."
+      - name: _last_updated_at
+        description: "Latest source-row database INSERT/UPDATE time, including soft deletion/restoration. Not commit-order CDC or the refresh time of this derived model or its joined records."
+      - name: _is_deleted
+        description: "Source soft-deletion flag. Raw staging retains both states; core/facts retain the latest tombstone for propagation, while reporting marts filter true. Independent of business status and is_active; no automatic cascade."
+      - name: _deleted_at
+        description: "Time of the current source soft-deletion episode, set when the flag becomes true, preserved while true, NULL after restoration. Not a refund date."
+  - name: stg_sales
+    description: Raw sales-receipt headers.
+    columns:
+      - name: sale_id
+        data_tests: [not_null]
+      - name: _created_at
+        description: "Actual source database insertion time; trigger-managed and immutable. Existing records adopt migration time; not the business event date."
+      - name: _last_updated_at
+        description: "Latest source-row database INSERT/UPDATE time, including soft deletion/restoration. Not commit-order CDC or the refresh time of this derived model or its joined records."
+      - name: _is_deleted
+        description: "Source soft-deletion flag. Raw staging retains both states; core/facts retain the latest tombstone for propagation, while reporting marts filter true. Independent of business status and is_active; no automatic cascade."
+      - name: _deleted_at
+        description: "Time of the current source soft-deletion episode, set when the flag becomes true, preserved while true, NULL after restoration. Not a refund date."
+  - name: stg_sale_items
+    description: Raw sales lines with historical snapshots.
+    columns:
+      - name: sale_item_id
+        data_tests: [not_null]
+      - name: _created_at
+        description: "Actual source database insertion time; trigger-managed and immutable. Existing records adopt migration time; not the business event date."
+      - name: _last_updated_at
+        description: "Latest source-row database INSERT/UPDATE time, including soft deletion/restoration. Not commit-order CDC or the refresh time of this derived model or its joined records."
+      - name: _is_deleted
+        description: "Source soft-deletion flag. Raw staging retains both states; core/facts retain the latest tombstone for propagation, while reporting marts filter true. Independent of business status and is_active; no automatic cascade."
+      - name: _deleted_at
+        description: "Time of the current source soft-deletion episode, set when the flag becomes true, preserved while true, NULL after restoration. Not a refund date."
+  - name: stg_sale_promotions
+    description: Raw applied promotions.
+    columns:
+      - name: sale_promotion_id
+        data_tests: [not_null]
+      - name: _created_at
+        description: "Actual source database insertion time; trigger-managed and immutable. Existing records adopt migration time; not the business event date."
+      - name: _last_updated_at
+        description: "Latest source-row database INSERT/UPDATE time, including soft deletion/restoration. Not commit-order CDC or the refresh time of this derived model or its joined records."
+      - name: _is_deleted
+        description: "Source soft-deletion flag. Raw staging retains both states; core/facts retain the latest tombstone for propagation, while reporting marts filter true. Independent of business status and is_active; no automatic cascade."
+      - name: _deleted_at
+        description: "Time of the current source soft-deletion episode, set when the flag becomes true, preserved while true, NULL after restoration. Not a refund date."
+  - name: stg_payments
+    description: Raw payment attempts.
+    columns:
+      - name: payment_id
+        data_tests: [not_null]
+      - name: _created_at
+        description: "Actual source database insertion time; trigger-managed and immutable. Existing records adopt migration time; not the business event date."
+      - name: _last_updated_at
+        description: "Latest source-row database INSERT/UPDATE time, including soft deletion/restoration. Not commit-order CDC or the refresh time of this derived model or its joined records."
+      - name: _is_deleted
+        description: "Source soft-deletion flag. Raw staging retains both states; core/facts retain the latest tombstone for propagation, while reporting marts filter true. Independent of business status and is_active; no automatic cascade."
+      - name: _deleted_at
+        description: "Time of the current source soft-deletion episode, set when the flag becomes true, preserved while true, NULL after restoration. Not a refund date."
+  - name: stg_loyalty_transactions
+    description: Raw loyalty point movements.
+    columns:
+      - name: loyalty_transaction_id
+        data_tests: [not_null]
+      - name: _created_at
+        description: "Actual source database insertion time; trigger-managed and immutable. Existing records adopt migration time; not the business event date."
+      - name: _last_updated_at
+        description: "Latest source-row database INSERT/UPDATE time, including soft deletion/restoration. Not commit-order CDC or the refresh time of this derived model or its joined records."
+      - name: _is_deleted
+        description: "Source soft-deletion flag. Raw staging retains both states; core/facts retain the latest tombstone for propagation, while reporting marts filter true. Independent of business status and is_active; no automatic cascade."
+      - name: _deleted_at
+        description: "Time of the current source soft-deletion episode, set when the flag becomes true, preserved while true, NULL after restoration. Not a refund date."
+  - name: stg_returns
+    description: Raw return documents.
+    columns:
+      - name: return_id
+        data_tests: [not_null]
+      - name: _created_at
+        description: "Actual source database insertion time; trigger-managed and immutable. Existing records adopt migration time; not the business event date."
+      - name: _last_updated_at
+        description: "Latest source-row database INSERT/UPDATE time, including soft deletion/restoration. Not commit-order CDC or the refresh time of this derived model or its joined records."
+      - name: _is_deleted
+        description: "Source soft-deletion flag. Raw staging retains both states; core/facts retain the latest tombstone for propagation, while reporting marts filter true. Independent of business status and is_active; no automatic cascade."
+      - name: _deleted_at
+        description: "Time of the current source soft-deletion episode, set when the flag becomes true, preserved while true, NULL after restoration. Not a refund date."
+  - name: stg_return_items
+    description: Raw return lines.
+    columns:
+      - name: return_item_id
+        data_tests: [not_null]
+      - name: _created_at
+        description: "Actual source database insertion time; trigger-managed and immutable. Existing records adopt migration time; not the business event date."
+      - name: _last_updated_at
+        description: "Latest source-row database INSERT/UPDATE time, including soft deletion/restoration. Not commit-order CDC or the refresh time of this derived model or its joined records."
+      - name: _is_deleted
+        description: "Source soft-deletion flag. Raw staging retains both states; core/facts retain the latest tombstone for propagation, while reporting marts filter true. Independent of business status and is_active; no automatic cascade."
+      - name: _deleted_at
+        description: "Time of the current source soft-deletion episode, set when the flag becomes true, preserved while true, NULL after restoration. Not a refund date."
+  - name: stg_waste_records
+    description: Raw waste/disposal records.
+    columns:
+      - name: waste_record_id
+        data_tests: [not_null]
+      - name: _created_at
+        description: "Actual source database insertion time; trigger-managed and immutable. Existing records adopt migration time; not the business event date."
+      - name: _last_updated_at
+        description: "Latest source-row database INSERT/UPDATE time, including soft deletion/restoration. Not commit-order CDC or the refresh time of this derived model or its joined records."
+      - name: _is_deleted
+        description: "Source soft-deletion flag. Raw staging retains both states; core/facts retain the latest tombstone for propagation, while reporting marts filter true. Independent of business status and is_active; no automatic cascade."
+      - name: _deleted_at
+        description: "Time of the current source soft-deletion episode, set when the flag becomes true, preserved while true, NULL after restoration. Not a refund date."
+  - name: stg_shifts
+    description: Raw shift records.
+    columns:
+      - name: shift_id
+        data_tests: [not_null]
+      - name: _created_at
+        description: "Actual source database insertion time; trigger-managed and immutable. Existing records adopt migration time; not the business event date."
+      - name: _last_updated_at
+        description: "Latest source-row database INSERT/UPDATE time, including soft deletion/restoration. Not commit-order CDC or the refresh time of this derived model or its joined records."
+      - name: _is_deleted
+        description: "Source soft-deletion flag. Raw staging retains both states; core/facts retain the latest tombstone for propagation, while reporting marts filter true. Independent of business status and is_active; no automatic cascade."
+      - name: _deleted_at
+        description: "Time of the current source soft-deletion episode, set when the flag becomes true, preserved while true, NULL after restoration. Not a refund date."
+  - name: stg_cash_movements
+    description: Raw cash-drawer movements.
+    columns:
+      - name: cash_movement_id
+        data_tests: [not_null]
+      - name: _created_at
+        description: "Actual source database insertion time; trigger-managed and immutable. Existing records adopt migration time; not the business event date."
+      - name: _last_updated_at
+        description: "Latest source-row database INSERT/UPDATE time, including soft deletion/restoration. Not commit-order CDC or the refresh time of this derived model or its joined records."
+      - name: _is_deleted
+        description: "Source soft-deletion flag. Raw staging retains both states; core/facts retain the latest tombstone for propagation, while reporting marts filter true. Independent of business status and is_active; no automatic cascade."
+      - name: _deleted_at
+        description: "Time of the current source soft-deletion episode, set when the flag becomes true, preserved while true, NULL after restoration. Not a refund date."
+  - name: stg_simulation_runs
+    description: Raw simulator-run audit records.
+    columns:
+      - name: simulation_run_id
+        data_tests: [not_null]

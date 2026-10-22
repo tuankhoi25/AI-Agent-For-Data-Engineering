@@ -1,0 +1,31 @@
+description: Build inventory, procurement, production/waste and cash reporting marts.
+schedule: "35 23 * * *"
+queue: bakery
+max_active_steps: 1
+timeout_sec: 7200
+working_dir: /opt/bakery
+labels:
+  project: bakery
+  purpose: elt-component
+params:
+  - name: BATCH_ID
+    type: string
+    default: auto
+env:
+  BAKERY_BATCH_ID: ${params.BATCH_ID}
+defaults:
+  retry_policy:
+    limit: 2
+    interval_sec: 60
+steps:
+  - id: run
+    run: python data_platform/dagu/pipeline.py marts-operations
+  - id: test
+    run: python data_platform/dagu/pipeline.py marts-operations-tests
+    depends: [run]
+  - id: publish
+    run: python data_platform/dagu/pipeline.py marts-operations-publish
+    depends: [test]
+  - id: metadata
+    run: python data_platform/dagu/catalog.py dagu
+    depends: [publish]

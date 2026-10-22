@@ -1,0 +1,344 @@
+name: analytics
+
+profile: analytics
+
+vars:
+  # Daily extraction rechecks a bounded window and skips previously loaded
+  # (business key, source timestamp) versions. Covers ordinary late commits.
+  staging_lookback_hours: 48
+  # Metadata is kept in project configuration, not inside the latest-row
+  # macro. This is the source of truth for append-only business keys and
+  # core dependency propagation.
+  staging_business_keys:
+    stg_allergens: [allergen_id]
+    stg_branches: [branch_id]
+    stg_cash_movements: [cash_movement_id]
+    stg_customers: [customer_id]
+    stg_employees: [employee_id]
+    stg_goods_receipt_items: [goods_receipt_item_id]
+    stg_goods_receipts: [goods_receipt_id]
+    stg_inventory_lots: [inventory_lot_id]
+    stg_loyalty_transactions: [loyalty_transaction_id]
+    stg_payments: [payment_id]
+    stg_product_allergens: [product_id, allergen_id]
+    stg_product_categories: [category_id]
+    stg_production_batches: [production_batch_id]
+    stg_production_consumptions: [production_consumption_id]
+    stg_products: [product_id]
+    stg_promotion_products: [promotion_id, product_id]
+    stg_promotions: [promotion_id]
+    stg_purchase_order_items: [purchase_order_item_id]
+    stg_purchase_orders: [purchase_order_id]
+    stg_recipe_items: [recipe_item_id]
+    stg_recipes: [recipe_id]
+    stg_return_items: [return_item_id]
+    stg_returns: [return_id]
+    stg_sale_items: [sale_item_id]
+    stg_sale_promotions: [sale_promotion_id]
+    stg_sales: [sale_id]
+    stg_shifts: [shift_id]
+    stg_stock_items: [stock_item_id]
+    stg_stock_movements: [stock_movement_id]
+    stg_supplier_products: [supplier_product_id]
+    stg_suppliers: [supplier_id]
+    stg_units_of_measure: [uom_id]
+    stg_waste_records: [waste_record_id]
+    stg_weather_daily: [weather_date, location_code, weather_source]
+
+  # Mart dimensions are maintained as SCD2 tables. Their snapshot version id
+  # is the merge key; the numeric *_sk is the durable foreign key used by facts.
+  scd2_dimension_models:
+    - dim_allergens
+    - dim_branches
+    - dim_customers
+    - dim_employees
+    - dim_inventory_lots
+    - dim_product_categories
+    - dim_products
+    - dim_promotions
+    - dim_recipes
+    - dim_stock_items
+    - dim_suppliers
+    - dim_units_of_measure
+
+  incremental_model_meta:
+    core_allergens: {source_model: stg_allergens, dependencies: []}
+    core_branches: {source_model: stg_branches, dependencies: []}
+    core_cash_movements:
+      source_model: stg_cash_movements
+      dependencies: [{model: core_shifts, parent_key: [shift_id], child_key: [shift_id]}]
+    core_customers: {source_model: stg_customers, dependencies: []}
+    core_employees: {source_model: stg_employees, dependencies: []}
+    core_goods_receipt_items:
+      source_model: stg_goods_receipt_items
+      dependencies:
+        - {model: core_goods_receipts, parent_key: [goods_receipt_id], child_key: [goods_receipt_id]}
+        - {model: core_purchase_order_items, parent_key: [purchase_order_item_id], child_key: [purchase_order_item_id]}
+        - {model: core_stock_items, parent_key: [stock_item_id], child_key: [stock_item_id]}
+        - {model: core_units_of_measure, parent_key: [uom_id], child_key: [uom_id]}
+    core_goods_receipts:
+      source_model: stg_goods_receipts
+      dependencies:
+        - {model: core_purchase_orders, parent_key: [purchase_order_id], child_key: [purchase_order_id]}
+        - {model: core_suppliers, parent_key: [supplier_id], child_key: [supplier_id]}
+        - {model: core_branches, parent_key: [branch_id], child_key: [branch_id]}
+        - {model: core_employees, parent_key: [employee_id], child_key: [received_by]}
+    core_inventory_lots:
+      source_model: stg_inventory_lots
+      dependencies: [{model: core_stock_items, parent_key: [stock_item_id], child_key: [stock_item_id]}]
+    core_loyalty_transactions:
+      source_model: stg_loyalty_transactions
+      partition_key: [customer_id]
+      dependencies:
+        - {model: core_customers, parent_key: [customer_id], child_key: [customer_id]}
+        - {model: core_sales, parent_key: [sale_id], child_key: [sale_id]}
+    core_payments:
+      source_model: stg_payments
+      dependencies: [{model: core_sales, parent_key: [sale_id], child_key: [sale_id]}]
+    core_product_allergens:
+      source_model: stg_product_allergens
+      dependencies:
+        - {model: core_products, parent_key: [product_id], child_key: [product_id]}
+        - {model: core_allergens, parent_key: [allergen_id], child_key: [allergen_id]}
+    core_product_categories: {source_model: stg_product_categories, dependencies: []}
+    core_production_batches:
+      source_model: stg_production_batches
+      dependencies:
+        - {model: core_branches, parent_key: [branch_id], child_key: [branch_id]}
+        - {model: core_products, parent_key: [product_id], child_key: [product_id]}
+        - {model: core_recipes, parent_key: [recipe_id], child_key: [recipe_id]}
+        - {model: core_units_of_measure, parent_key: [uom_id], child_key: [uom_id]}
+        - {model: core_employees, parent_key: [employee_id], child_key: [produced_by]}
+    core_production_consumptions:
+      source_model: stg_production_consumptions
+      dependencies:
+        - {model: core_production_batches, parent_key: [production_batch_id], child_key: [production_batch_id]}
+        - {model: core_stock_items, parent_key: [stock_item_id], child_key: [stock_item_id]}
+        - {model: core_inventory_lots, parent_key: [inventory_lot_id], child_key: [inventory_lot_id]}
+        - {model: core_units_of_measure, parent_key: [uom_id], child_key: [uom_id]}
+    core_products:
+      source_model: stg_products
+      dependencies:
+        - {model: core_product_categories, parent_key: [category_id], child_key: [category_id]}
+        - {model: core_units_of_measure, parent_key: [uom_id], child_key: [sell_uom_id]}
+        - {model: core_stock_items, parent_key: [stock_item_id], child_key: [stock_item_id]}
+    core_promotion_products:
+      source_model: stg_promotion_products
+      dependencies:
+        - {model: core_promotions, parent_key: [promotion_id], child_key: [promotion_id]}
+        - {model: core_products, parent_key: [product_id], child_key: [product_id]}
+    core_promotions: {source_model: stg_promotions, dependencies: []}
+    core_purchase_order_items:
+      source_model: stg_purchase_order_items
+      dependencies:
+        - {model: core_purchase_orders, parent_key: [purchase_order_id], child_key: [purchase_order_id]}
+        - {model: core_stock_items, parent_key: [stock_item_id], child_key: [stock_item_id]}
+        - {model: core_units_of_measure, parent_key: [uom_id], child_key: [uom_id]}
+    core_purchase_orders:
+      source_model: stg_purchase_orders
+      dependencies:
+        - {model: core_suppliers, parent_key: [supplier_id], child_key: [supplier_id]}
+        - {model: core_branches, parent_key: [branch_id], child_key: [branch_id]}
+        - {model: core_employees, parent_key: [employee_id], child_key: [created_by]}
+    core_recipe_items:
+      source_model: stg_recipe_items
+      dependencies:
+        - {model: core_recipes, parent_key: [recipe_id], child_key: [recipe_id]}
+        - {model: core_stock_items, parent_key: [stock_item_id], child_key: [stock_item_id]}
+        - {model: core_units_of_measure, parent_key: [uom_id], child_key: [uom_id]}
+    core_recipes:
+      source_model: stg_recipes
+      dependencies:
+        - {model: core_products, parent_key: [product_id], child_key: [product_id]}
+        - {model: core_units_of_measure, parent_key: [uom_id], child_key: [yield_uom_id]}
+    core_return_items:
+      source_model: stg_return_items
+      dependencies:
+        - {model: core_returns, parent_key: [return_id], child_key: [return_id]}
+        - {model: core_sale_items, parent_key: [sale_item_id], child_key: [sale_item_id]}
+    core_returns:
+      source_model: stg_returns
+      dependencies: [{model: core_sales, parent_key: [sale_id], child_key: [sale_id]}]
+    core_sale_items:
+      source_model: stg_sale_items
+      dependencies:
+        - {model: core_sales, parent_key: [sale_id], child_key: [sale_id]}
+        - {model: core_products, parent_key: [product_id], child_key: [product_id]}
+        - {model: core_units_of_measure, parent_key: [uom_id], child_key: [uom_id]}
+    core_sale_promotions:
+      source_model: stg_sale_promotions
+      dependencies:
+        - {model: core_sales, parent_key: [sale_id], child_key: [sale_id]}
+        - {model: core_promotions, parent_key: [promotion_id], child_key: [promotion_id]}
+    core_sales:
+      source_model: stg_sales
+      dependencies:
+        - {model: core_branches, parent_key: [branch_id], child_key: [branch_id]}
+        - {model: core_customers, parent_key: [customer_id], child_key: [customer_id]}
+        - {model: core_employees, parent_key: [employee_id], child_key: [cashier_id]}
+    core_shifts:
+      source_model: stg_shifts
+      dependencies:
+        - {model: core_branches, parent_key: [branch_id], child_key: [branch_id]}
+        - {model: core_employees, parent_key: [employee_id], child_key: [employee_id]}
+    core_stock_items:
+      source_model: stg_stock_items
+      dependencies: [{model: core_units_of_measure, parent_key: [uom_id], child_key: [base_uom_id]}]
+    core_stock_movements:
+      source_model: stg_stock_movements
+      dependencies:
+        - {model: core_branches, parent_key: [branch_id], child_key: [branch_id]}
+        - {model: core_stock_items, parent_key: [stock_item_id], child_key: [stock_item_id]}
+        - {model: core_inventory_lots, parent_key: [inventory_lot_id], child_key: [inventory_lot_id]}
+        - {model: core_units_of_measure, parent_key: [uom_id], child_key: [uom_id]}
+    core_supplier_products:
+      source_model: stg_supplier_products
+      dependencies:
+        - {model: core_suppliers, parent_key: [supplier_id], child_key: [supplier_id]}
+        - {model: core_stock_items, parent_key: [stock_item_id], child_key: [stock_item_id]}
+        - {model: core_units_of_measure, parent_key: [uom_id], child_key: [purchase_uom_id]}
+        - {model: core_units_of_measure, parent_key: [uom_id], child_key: [pack_uom_id]}
+    core_suppliers: {source_model: stg_suppliers, dependencies: []}
+    core_units_of_measure: {source_model: stg_units_of_measure, dependencies: []}
+    core_waste_records:
+      source_model: stg_waste_records
+      dependencies:
+        - {model: core_branches, parent_key: [branch_id], child_key: [branch_id]}
+        - {model: core_stock_items, parent_key: [stock_item_id], child_key: [stock_item_id]}
+        - {model: core_inventory_lots, parent_key: [inventory_lot_id], child_key: [inventory_lot_id]}
+        - {model: core_units_of_measure, parent_key: [uom_id], child_key: [uom_id]}
+    core_weather_daily: {source_model: stg_weather_daily, dependencies: []}
+
+  mart_model_meta:
+    mart_cash_reconciliation:
+      key: [shift_id]
+      upstream:
+        - {model: core_shifts, key: [shift_id]}
+        - {model: core_cash_movements, key: [shift_id]}
+    mart_customer_360:
+      key: [customer_id]
+      upstream:
+        - {model: core_customers, key: [customer_id]}
+        - {model: fct_sales, key: [customer_id]}
+        - {model: core_loyalty_transactions, key: [customer_id]}
+    mart_daily_operations:
+      key: [business_date, branch_id, uom_id]
+      upstream:
+        - {model: core_production_batches, key: [business_date, branch_id, uom_id]}
+        - {model: core_waste_records, key: [business_date, branch_id, uom_id]}
+    mart_daily_sales:
+      key: [business_date, branch_id]
+      upstream:
+        - {model: fct_sales, key: [business_date, branch_id]}
+    mart_inventory_position:
+      key: [branch_id, stock_item_id, inventory_lot_id]
+      upstream:
+        - {model: core_stock_movements, key: [branch_id, stock_item_id, inventory_lot_id]}
+    mart_procurement_status:
+      key: [purchase_order_item_id]
+      upstream:
+        - {model: core_purchase_order_items, key: [purchase_order_item_id]}
+        - {model: core_goods_receipt_items, key: [purchase_order_item_id]}
+    mart_product_sales:
+      key: [business_date, branch_id, product_id, uom_code]
+      upstream:
+        - {model: fct_sale_items, key: [business_date, branch_id, product_id, uom_code]}
+
+seed-paths: ["seeds"]
+model-paths: ["models"]
+macro-paths: ["macros"]
+test-paths: ["test"]
+snapshot-paths: ["snapshots"]
+
+models:
+  analytics:
+    +persist_docs:
+      relation: true
+      columns: true
+    staging:
+      +schema: staging
+      +materialized: incremental
+      +incremental_strategy: append
+      +on_schema_change: append_new_columns
+      +tags: [staging]
+    core:
+      +schema: core
+      +materialized: incremental
+      +incremental_strategy: merge
+      +on_schema_change: append_new_columns
+      +tags: [core]
+      core_allergens: {+unique_key: [allergen_id]}
+      core_branches: {+unique_key: [branch_id]}
+      core_cash_movements: {+unique_key: [cash_movement_id]}
+      core_customers: {+unique_key: [customer_id]}
+      core_employees: {+unique_key: [employee_id]}
+      core_goods_receipt_items: {+unique_key: [goods_receipt_item_id]}
+      core_goods_receipts: {+unique_key: [goods_receipt_id]}
+      core_inventory_lots: {+unique_key: [inventory_lot_id]}
+      core_loyalty_transactions: {+unique_key: [loyalty_transaction_id]}
+      core_payments: {+unique_key: [payment_id]}
+      core_product_allergens: {+unique_key: [product_id, allergen_id]}
+      core_product_categories: {+unique_key: [category_id]}
+      core_production_batches: {+unique_key: [production_batch_id]}
+      core_production_consumptions: {+unique_key: [production_consumption_id]}
+      core_products: {+unique_key: [product_id]}
+      core_promotion_products: {+unique_key: [promotion_id, product_id]}
+      core_promotions: {+unique_key: [promotion_id]}
+      core_purchase_order_items: {+unique_key: [purchase_order_item_id]}
+      core_purchase_orders: {+unique_key: [purchase_order_id]}
+      core_recipe_items: {+unique_key: [recipe_item_id]}
+      core_recipes: {+unique_key: [recipe_id]}
+      core_return_items: {+unique_key: [return_item_id]}
+      core_returns: {+unique_key: [return_id]}
+      core_sale_items: {+unique_key: [sale_item_id]}
+      core_sale_promotions: {+unique_key: [sale_promotion_id]}
+      core_sales: {+unique_key: [sale_id]}
+      core_shifts: {+unique_key: [shift_id]}
+      core_stock_items: {+unique_key: [stock_item_id]}
+      core_stock_movements: {+unique_key: [stock_movement_id]}
+      core_supplier_products: {+unique_key: [supplier_product_id]}
+      core_suppliers: {+unique_key: [supplier_id]}
+      core_units_of_measure: {+unique_key: [uom_id]}
+      core_waste_records: {+unique_key: [waste_record_id]}
+    mart:
+      +schema: mart
+      +materialized: incremental
+      +incremental_strategy: merge
+      +on_schema_change: append_new_columns
+      +tags: [mart]
+      dim_allergens: {+unique_key: [_dimension_version_id]}
+      dim_branches: {+unique_key: [_dimension_version_id]}
+      dim_customers: {+unique_key: [_dimension_version_id]}
+      dim_employees: {+unique_key: [_dimension_version_id]}
+      dim_inventory_lots: {+unique_key: [_dimension_version_id]}
+      dim_product_categories: {+unique_key: [_dimension_version_id]}
+      dim_products: {+unique_key: [_dimension_version_id]}
+      dim_promotions: {+unique_key: [_dimension_version_id]}
+      dim_recipes: {+unique_key: [_dimension_version_id]}
+      dim_stock_items: {+unique_key: [_dimension_version_id]}
+      dim_suppliers: {+unique_key: [_dimension_version_id]}
+      dim_units_of_measure: {+unique_key: [_dimension_version_id]}
+      dim_date: {+unique_key: [date_sk]}
+      fct_sale_items: {+unique_key: [sale_item_id]}
+      fct_sales: {+unique_key: [sale_id]}
+      fct_daily_weather: {+unique_key: [weather_date, location_code, weather_source]}
+      mart_cash_reconciliation: {+unique_key: [shift_id]}
+      mart_customer_360: {+unique_key: [customer_id]}
+      mart_daily_operations: {+unique_key: [business_date, branch_id, uom_id]}
+      mart_daily_sales: {+unique_key: [business_date, branch_id]}
+      mart_inventory_position: {+unique_key: [branch_id, stock_item_id, inventory_lot_id]}
+      mart_procurement_status: {+unique_key: [purchase_order_item_id]}
+      mart_product_sales: {+unique_key: [business_date, branch_id, product_id, uom_code]}
+
+snapshots:
+  analytics:
+    +target_schema: analytics_mart
+    +tags: [mart, scd2, technical]
+
+seeds:
+  analytics:
+    +schema: mart
+
+clean-targets:
+  - "target"
+  - "dbt_packages"

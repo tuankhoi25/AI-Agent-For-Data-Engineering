@@ -1,0 +1,27 @@
+host: 0.0.0.0
+port: 8080
+tz: Asia/Ho_Chi_Minh
+env_passthrough:
+  - POSTGRES_USER
+  - POSTGRES_PASSWORD
+  - POSTGRES_DB
+  - DBT_POSTGRES_HOST
+  - DBT_THREADS
+  - POSTGRES_HOST_PORT
+  - PGOPTIONS
+  - MARMOT_HOST
+  - MARMOT_API_KEY
+  - DAGU_API
+  - DAGU_UI_URL
+  - TZ
+auth:
+  mode: none
+paths:
+  dags_dir: /opt/bakery/data_platform/dagu/dags
+  wiki_dir: /var/lib/dagu/wiki
+queues:
+  enabled: true
+  config:
+    - name: bakery
+      max_concurrency: 1
+

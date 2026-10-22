@@ -1,0 +1,272 @@
+services:
+  dagu:
+    build:
+      context: ./data_platform/dagu
+    restart: unless-stopped
+    init: true
+    ports:
+      - "127.0.0.1:${DAGU_HOST_PORT:-8088}:8080"
+    environment:
+      DAGU_HOME: /var/lib/dagu
+      DAGU_HOST: 0.0.0.0
+      DAGU_PORT: "8080"
+      DAGU_SKIP_EXAMPLES: "true"
+      DAGU_API: http://127.0.0.1:8080/api/v1
+      DAGU_UI_URL: http://localhost:${DAGU_HOST_PORT:-8088}
+      TZ: Asia/Ho_Chi_Minh
+      DBT_POSTGRES_HOST: postgres
+      DBT_THREADS: ${DBT_THREADS:-1}
+      POSTGRES_HOST_PORT: "5432"
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      PGOPTIONS: -c duckdb.force_execution=off -c timezone=Asia/Ho_Chi_Minh
+      MARMOT_HOST: http://marmot:8080
+      MARMOT_API_KEY: ${MARMOT_API_KEY}
+    volumes:
+      - dagu_data:/var/lib/dagu
+      - ./analytics:/opt/bakery/analytics
+      - ./data_platform/dagu:/opt/bakery/data_platform/dagu:ro
+      - ./data_platform/marmot:/opt/bakery/data_platform/marmot:ro
+      - ./data_platform/postgres:/opt/bakery/data_platform/postgres:ro
+      - ./data_platform/weather:/opt/bakery/data_platform/weather:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      marmot:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/api/v1/health', timeout=5)"]
+      interval: 15s
+      timeout: 10s
+      retries: 12
+      start_period: 30s
+
+  assistant_ui:
+    build:
+      context: ./data_platform/assistant_ui
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "${ASSISTANT_UI_HOST_PORT}:3000"
+    environment:
+      BAKERY_AGENT_URL: http://bakery_agent:8123/agent
+    depends_on:
+      bakery_agent:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:3000/api/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  bakery_agent:
+    build:
+      context: ./data_platform/assistant_ui
+      dockerfile: agent/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "${BAKERY_AGENT_HOST_PORT}:8123"
+    environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      BAKERY_AGENT_MODEL: ${BAKERY_AGENT_MODEL}
+      BAKERY_AGENT_REASONING_EFFORT: ${BAKERY_AGENT_REASONING_EFFORT:-high}
+      CUBE_MCP_URL: http://mcp_server:8001/mcp
+      MARMOT_MCP_URL: http://marmot:8080/api/v1/mcp
+      MARMOT_API_KEY: ${MARMOT_API_KEY}
+      DBHUB_MCP_URL: http://dbhub:8080/mcp
+      BAKERY_SKILLS_DIR: /app/skills
+    volumes:
+      - ./data_platform/mcp_server/skills:/app/skills:ro
+    depends_on:
+      mcp_server:
+        condition: service_started
+      marmot:
+        condition: service_started
+      dbhub:
+        condition: service_started
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8123/health', timeout=3)"
+      interval: 10s
+      timeout: 5s
+      retries: 18
+
+  marmot:
+    build:
+      context: ./data_platform/marmot
+      dockerfile: Dockerfile
+      args:
+        MARMOT_VERSION: "0.11.1"
+    image: bakery-marmot:0.11.1-dagu-icon
+    ports:
+      - "${MARMOT_HOST_PORT}:8080"
+    environment:
+      MARMOT_DATABASE_HOST: ${POSTGRES_HOST}
+      MARMOT_DATABASE_PORT: ${POSTGRES_PORT}
+      MARMOT_DATABASE_USER: ${POSTGRES_USER}
+      MARMOT_DATABASE_PASSWORD: ${POSTGRES_PASSWORD}
+      MARMOT_DATABASE_NAME: ${POSTGRES_DB}
+      MARMOT_DATABASE_SSLMODE: disable
+      MARMOT_SERVER_ENCRYPTION_KEY: ${MARMOT_ENCRYPTION_KEY}
+    volumes:
+      - ./analytics/target/dagu:/data/dagu-artifacts:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  dbhub:
+    image: bytebase/dbhub:1.4.0
+    init: true
+    restart: unless-stopped
+    ports:
+      - "${DBHUB_HOST_PORT}:8080"
+    environment:
+      DBHUB_CUBE_DSN: "postgres://${CUBEJS_SQL_USER}:${CUBEJS_SQL_PASSWORD}@${DBHUB_CUBE_HOST}:${CUBEJS_PG_SQL_PORT}/${DBHUB_CUBE_DATABASE}"
+      DBHUB_ALLOWED_HOSTS: ${DBHUB_ALLOWED_HOSTS}
+    volumes:
+      - ./data_platform/dbhub/dbhub.toml:/etc/dbhub/dbhub.toml:ro
+    command:
+      - --transport
+      - http
+      - --port
+      - "8080"
+      - --config
+      - /etc/dbhub/dbhub.toml
+    depends_on:
+      cube_api:
+        condition: service_started
+
+  mcp_server:
+    build:
+      context: ./data_platform/mcp_server
+    restart: unless-stopped
+    ports:
+      - "${MCP_SERVER_HOST_PORT}:8001"
+    environment:
+      CUBE_API_URL: http://cube_api:4000/cubejs-api/v1
+      CUBE_API_TOKEN: ${CUBE_API_TOKEN:-}
+      MARMOT_HOST: http://marmot:8080
+      MARMOT_API_KEY: ${MARMOT_API_KEY}
+      MCP_SERVER_HOST: 0.0.0.0
+      MCP_SERVER_PORT: 8001
+    depends_on:
+      cube_api:
+        condition: service_started
+      marmot:
+        condition: service_started
+
+  cube_api:
+    restart: always
+    image: cubejs/cube:v1.8
+    ports:
+      - "${CUBEJS_HOST_PORT}:4000"
+    environment:
+      CUBEJS_DB_TYPE: postgres
+      CUBEJS_DB_HOST: ${POSTGRES_HOST}
+      CUBEJS_DB_PORT: ${POSTGRES_PORT}
+      CUBEJS_DB_NAME: ${POSTGRES_DB}
+      CUBEJS_DB_USER: ${CUBEJS_DB_USER}
+      CUBEJS_DB_PASS: ${CUBEJS_DB_PASS}
+      CUBEJS_CUBESTORE_HOST: cubestore_router
+      CUBEJS_API_SECRET: ${CUBEJS_API_SECRET}
+      CUBEJS_DEV_MODE: ${CUBEJS_DEV_MODE}
+      CUBEJS_PG_SQL_PORT: ${CUBEJS_PG_SQL_PORT}
+      CUBEJS_SQL_USER: ${CUBEJS_SQL_USER}
+      CUBEJS_SQL_PASSWORD: ${CUBEJS_SQL_PASSWORD}
+      PGOPTIONS: -c duckdb.force_execution=true -c timezone=Asia/Ho_Chi_Minh
+    volumes:
+      - ./data_platform/cube:/cube/conf
+    depends_on:
+      postgres:
+        condition: service_healthy
+      cube_refresh_worker:
+        condition: service_started
+      cubestore_router:
+        condition: service_started
+      cubestore_worker:
+        condition: service_started
+
+  cube_refresh_worker:
+    restart: always
+    image: cubejs/cube:v1.8
+    environment:
+      CUBEJS_DB_TYPE: postgres
+      CUBEJS_DB_HOST: ${POSTGRES_HOST}
+      CUBEJS_DB_PORT: ${POSTGRES_PORT}
+      CUBEJS_DB_NAME: ${POSTGRES_DB}
+      CUBEJS_DB_USER: ${CUBEJS_DB_USER}
+      CUBEJS_DB_PASS: ${CUBEJS_DB_PASS}
+      CUBEJS_CUBESTORE_HOST: cubestore_router
+      CUBEJS_API_SECRET: ${CUBEJS_API_SECRET}
+      CUBEJS_DEV_MODE: ${CUBEJS_DEV_MODE}
+      CUBEJS_REFRESH_WORKER: "true"
+      PGOPTIONS: -c duckdb.force_execution=true -c timezone=Asia/Ho_Chi_Minh
+    volumes:
+      - ./data_platform/cube:/cube/conf
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  cubestore_router:
+    restart: always
+    image: cubejs/cubestore:v1.8-arm64v8
+    environment:
+      - CUBESTORE_WORKERS=cubestore_worker:10001
+      - CUBESTORE_REMOTE_DIR=/cube/data
+      - CUBESTORE_META_PORT=9999
+      - CUBESTORE_SERVER_NAME=cubestore_router:9999
+    volumes:
+      - ./data_platform/cube/.cubestore:/cube/data
+
+  cubestore_worker:
+    restart: always
+    image: cubejs/cubestore:v1.8-arm64v8
+    environment:
+      - CUBESTORE_WORKERS=cubestore_worker:10001
+      - CUBESTORE_SERVER_NAME=cubestore_worker:10001
+      - CUBESTORE_WORKER_PORT=10001
+      - CUBESTORE_REMOTE_DIR=/cube/data
+      - CUBESTORE_META_ADDR=cubestore_router:9999
+    volumes:
+      - ./data_platform/cube/.cubestore:/cube/data
+    depends_on:
+      - cubestore_router
+
+  postgres:
+    build:
+      context: ./data_platform/postgres/docker
+    command:
+      - postgres
+      - -c
+      - shared_preload_libraries=pg_duckdb
+      - -c
+      - duckdb.postgres_role=cube_core
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      CUBEJS_DB_USER: ${CUBEJS_DB_USER}
+      CUBEJS_DB_PASS: ${CUBEJS_DB_PASS}
+      HISTORY_DAYS: ${HISTORY_DAYS:-30}
+    ports:
+      - "${POSTGRES_HOST_PORT}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./data_platform/postgres:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+  dagu_data:

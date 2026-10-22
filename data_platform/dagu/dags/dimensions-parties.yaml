@@ -1,0 +1,31 @@
+description: Build branch, customer and employee SCD2 dimensions.
+schedule: "40 22 * * *"
+queue: bakery
+max_active_steps: 1
+timeout_sec: 7200
+working_dir: /opt/bakery
+labels:
+  project: bakery
+  purpose: elt-component
+params:
+  - name: BATCH_ID
+    type: string
+    default: auto
+env:
+  BAKERY_BATCH_ID: ${params.BATCH_ID}
+defaults:
+  retry_policy:
+    limit: 2
+    interval_sec: 60
+steps:
+  - id: run
+    run: python data_platform/dagu/pipeline.py dimensions-parties
+  - id: test
+    run: python data_platform/dagu/pipeline.py dimensions-parties-tests
+    depends: [run]
+  - id: publish
+    run: python data_platform/dagu/pipeline.py dimensions-parties-publish
+    depends: [test]
+  - id: metadata
+    run: python data_platform/dagu/catalog.py dagu
+    depends: [publish]

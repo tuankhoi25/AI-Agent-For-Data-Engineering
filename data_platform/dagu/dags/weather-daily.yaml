@@ -1,0 +1,19 @@
+description: Fetch the latest completed daily weather observations before the dbt ETL batch.
+schedule: "0 22 * * *"
+queue: bakery
+max_active_steps: 1
+timeout_sec: 900
+working_dir: /opt/bakery
+labels:
+  project: bakery
+  purpose: weather-ingestion
+defaults:
+  retry_policy:
+    limit: 2
+    interval_sec: 300
+steps:
+  - id: collect_daily_weather
+    run: python data_platform/weather/collect_daily_weather.py
+  - id: metadata
+    run: python data_platform/dagu/catalog.py dagu
+    depends: [collect_daily_weather]

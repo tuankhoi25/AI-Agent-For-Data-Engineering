@@ -1,0 +1,92 @@
+# Local credentials and machine configuration
+.env
+.env.*
+!.env.example
+!.env.*.example
+*.pem
+*.key
+.aws/
+.codex/
+.agents/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Python environments, bytecode and tool caches
+.venv*/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+*.egg-info/
+
+# dbt output and local identifiers (including nested accidental targets)
+target/
+logs/
+dbt_packages/
+dbt_internal_packages/
+.dbt/
+.user.yml
+
+# Node / Next.js dependencies and generated assets
+node_modules/
+.next/
+out/
+dist/
+build/
+*.tsbuildinfo
+/data_platform/assistant_ui/public/perspective/
+playwright-report/
+test-results/
+coverage/
+
+# Service state, caches, local snapshots and backups
+.cubestore/
+.rollback/
+*.log
+*.bak
+*.tmp
+*.swp
+*.swo
+/data/
+/datasets/
+/exports/
+/backups/
+/outputs/
+
+# Generated datasets, database files and dumps
+*.csv
+*.tsv
+*.parquet
+*.arrow
+*.feather
+*.avro
+*.orc
+*.xls
+*.xlsx
+*.duckdb
+*.duckdb.wal
+*.db
+*.sqlite
+*.sqlite3
+*.dump
+*.backup
+*.sql.gz
+*.tar
+*.tar.gz
+*.zip
+
+# Versioned reference seed and synthetic test fixtures are source inputs
+!/analytics/seeds/vietnam_holidays.csv
+!**/test/fixtures/**/*.csv
+!**/test/fixtures/**/*.tsv
+!**/test/fixtures/**/*.parquet
+
+# Notebook caches and local scratch files
+.ipynb_checkpoints/
+/.py

@@ -1,0 +1,49 @@
+cubes:
+  - name: simulation_runs
+    sql_table: bakery.simulation_runs
+    data_source: default
+    joins: []
+    dimensions:
+      - name: simulation_run_id
+        sql: simulation_run_id
+        type: number
+        primary_key: true
+      - name: run_key
+        sql: run_key
+        type: string
+      - name: business_date
+        sql: business_date
+        type: time
+      - name: random_seed
+        sql: random_seed
+        type: number
+      - name: status
+        sql: status
+        type: string
+      - name: started_at
+        sql: started_at
+        type: time
+      - name: finished_at
+        sql: finished_at
+        type: time
+      - name: records_created_value
+        sql: records_created
+        type: number
+      - name: error_message
+        sql: error_message
+        type: string
+      - name: notes
+        sql: notes
+        type: string
+    measures:
+      - name: count
+        type: count
+      - name: records_created
+        type: sum
+        sql: records_created
+      - name: failed_runs
+        type: sum
+        sql: CASE WHEN {CUBE}.status = 'FAILED' THEN 1 ELSE 0 END
+      - name: average_duration_seconds
+        type: avg
+        sql: EXTRACT(EPOCH FROM ({CUBE}.finished_at - {CUBE}.started_at))

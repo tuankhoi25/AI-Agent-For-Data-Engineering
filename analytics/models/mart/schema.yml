@@ -1,0 +1,267 @@
+version: 2
+
+models:
+  - name: dim_allergens
+    description: SCD2 allergen dimension.
+    columns:
+      - name: allergen_id
+        data_tests: [not_null]
+      - name: _valid_from
+        description: "Effective interval start; -infinity for the initial inferred history before the first observation."
+        data_tests: [not_null]
+      - name: _observed_from
+        description: "Actual start timestamp recorded by the dbt snapshot; earlier descriptive history is unknown."
+        data_tests: [not_null]
+      - name: _valid_to
+      - name: _is_current
+        data_tests: [not_null]
+      - name: allergen_sk
+        data_tests: [not_null, unique]
+  - name: dim_branches
+    description: SCD2 branch dimension.
+    columns:
+      - name: branch_id
+        data_tests: [not_null]
+      - name: _valid_from
+        description: "Effective interval start; -infinity for the initial inferred history before the first observation."
+        data_tests: [not_null]
+      - name: _observed_from
+        description: "Actual start timestamp recorded by the dbt snapshot; earlier descriptive history is unknown."
+        data_tests: [not_null]
+      - name: _valid_to
+      - name: _is_current
+        data_tests: [not_null]
+      - name: branch_sk
+        data_tests: [not_null, unique]
+  - name: dim_customers
+    description: SCD2 customer dimension.
+    columns:
+      - name: customer_id
+        data_tests: [not_null]
+      - name: _valid_from
+        description: "Effective interval start; -infinity for the initial inferred history before the first observation."
+        data_tests: [not_null]
+      - name: _observed_from
+        description: "Actual start timestamp recorded by the dbt snapshot; earlier descriptive history is unknown."
+        data_tests: [not_null]
+      - name: _valid_to
+      - name: _is_current
+        data_tests: [not_null]
+      - name: customer_sk
+        data_tests: [not_null, unique]
+  - name: dim_employees
+    description: SCD2 employee dimension.
+    columns:
+      - name: employee_id
+        data_tests: [not_null]
+      - name: _valid_from
+        description: "Effective interval start; -infinity for the initial inferred history before the first observation."
+        data_tests: [not_null]
+      - name: _observed_from
+        description: "Actual start timestamp recorded by the dbt snapshot; earlier descriptive history is unknown."
+        data_tests: [not_null]
+      - name: _valid_to
+      - name: _is_current
+        data_tests: [not_null]
+      - name: employee_sk
+        data_tests: [not_null, unique]
+  - name: dim_inventory_lots
+    description: SCD2 inventory-lot dimension.
+    columns:
+      - name: inventory_lot_id
+        data_tests: [not_null]
+      - name: _valid_from
+        description: "Effective interval start; -infinity for the initial inferred history before the first observation."
+        data_tests: [not_null]
+      - name: _observed_from
+        description: "Actual start timestamp recorded by the dbt snapshot; earlier descriptive history is unknown."
+        data_tests: [not_null]
+      - name: _valid_to
+      - name: _is_current
+        data_tests: [not_null]
+      - name: inventory_lot_sk
+        data_tests: [not_null, unique]
+  - name: dim_product_categories
+    description: SCD2 product-category dimension.
+    columns:
+      - name: category_id
+        data_tests: [not_null]
+      - name: _valid_from
+        description: "Effective interval start; -infinity for the initial inferred history before the first observation."
+        data_tests: [not_null]
+      - name: _observed_from
+        description: "Actual start timestamp recorded by the dbt snapshot; earlier descriptive history is unknown."
+        data_tests: [not_null]
+      - name: _valid_to
+      - name: _is_current
+        data_tests: [not_null]
+      - name: category_sk
+        data_tests: [not_null, unique]
+  - name: dim_products
+    description: SCD2 sellable-product dimension.
+    columns:
+      - name: product_id
+        data_tests: [not_null]
+      - name: _valid_from
+        description: "Effective interval start; -infinity for the initial inferred history before the first observation."
+        data_tests: [not_null]
+      - name: _observed_from
+        description: "Actual start timestamp recorded by the dbt snapshot; earlier descriptive history is unknown."
+        data_tests: [not_null]
+      - name: _valid_to
+      - name: _is_current
+        data_tests: [not_null]
+      - name: product_sk
+        data_tests: [not_null, unique]
+  - name: dim_promotions
+    description: SCD2 promotion dimension.
+    columns:
+      - name: promotion_id
+        data_tests: [not_null]
+      - name: _valid_from
+        description: "Effective interval start; -infinity for the initial inferred history before the first observation."
+        data_tests: [not_null]
+      - name: _observed_from
+        description: "Actual start timestamp recorded by the dbt snapshot; earlier descriptive history is unknown."
+        data_tests: [not_null]
+      - name: _valid_to
+      - name: _is_current
+        data_tests: [not_null]
+      - name: promotion_sk
+        data_tests: [not_null, unique]
+  - name: dim_recipes
+    description: SCD2 recipe dimension.
+    columns:
+      - name: recipe_id
+        data_tests: [not_null]
+      - name: _valid_from
+        description: "Effective interval start; -infinity for the initial inferred history before the first observation."
+        data_tests: [not_null]
+      - name: _observed_from
+        description: "Actual start timestamp recorded by the dbt snapshot; earlier descriptive history is unknown."
+        data_tests: [not_null]
+      - name: _valid_to
+      - name: _is_current
+        data_tests: [not_null]
+      - name: recipe_sk
+        data_tests: [not_null, unique]
+  - name: dim_stock_items
+    description: SCD2 inventory-item dimension.
+    columns:
+      - name: stock_item_id
+        data_tests: [not_null]
+      - name: _valid_from
+        description: "Effective interval start; -infinity for the initial inferred history before the first observation."
+        data_tests: [not_null]
+      - name: _observed_from
+        description: "Actual start timestamp recorded by the dbt snapshot; earlier descriptive history is unknown."
+        data_tests: [not_null]
+      - name: _valid_to
+      - name: _is_current
+        data_tests: [not_null]
+      - name: stock_item_sk
+        data_tests: [not_null, unique]
+  - name: dim_suppliers
+    description: SCD2 supplier dimension.
+    columns:
+      - name: supplier_id
+        data_tests: [not_null]
+      - name: _valid_from
+        description: "Effective interval start; -infinity for the initial inferred history before the first observation."
+        data_tests: [not_null]
+      - name: _observed_from
+        description: "Actual start timestamp recorded by the dbt snapshot; earlier descriptive history is unknown."
+        data_tests: [not_null]
+      - name: _valid_to
+      - name: _is_current
+        data_tests: [not_null]
+      - name: supplier_sk
+        data_tests: [not_null, unique]
+  - name: dim_units_of_measure
+    description: SCD2 unit-of-measure dimension.
+    columns:
+      - name: uom_id
+        data_tests: [not_null]
+      - name: _valid_from
+        description: "Effective interval start; -infinity for the initial inferred history before the first observation."
+        data_tests: [not_null]
+      - name: _observed_from
+        description: "Actual start timestamp recorded by the dbt snapshot; earlier descriptive history is unknown."
+        data_tests: [not_null]
+      - name: _valid_to
+      - name: _is_current
+        data_tests: [not_null]
+      - name: uom_sk
+        data_tests: [not_null, unique]
+  - name: fct_sales
+    description: Sale-level fact keyed to mart SCD2 dimensions.
+    columns:
+      - name: sale_id
+        data_tests: [not_null, unique]
+  - name: fct_sale_items
+    description: Sale-line fact keyed to mart SCD2 dimensions.
+    columns:
+      - name: sale_item_id
+        data_tests: [not_null, unique]
+  - name: dim_date
+    description: Type 0 calendar dimension for local business-date analysis; it is intentionally not SCD2 because calendar attributes are stable.
+    columns:
+      - name: date_sk
+        data_tests: [not_null, unique]
+      - name: date_day
+        data_tests: [not_null, unique]
+      - name: is_weekend
+        data_tests: [not_null]
+      - name: is_vietnam_holiday
+        data_tests: [not_null]
+  - name: fct_daily_weather
+    description: Daily historical weather measurements at location grain, joined to dim_date by date_sk.
+    columns:
+      - name: date_sk
+        data_tests: [not_null]
+      - name: weather_date
+        data_tests: [not_null]
+      - name: location_code
+        data_tests: [not_null]
+      - name: weather_source
+        data_tests: [not_null]
+  - name: mart_daily_sales
+    description: Branch/day sales KPI mart.
+    columns:
+      - name: business_date
+        data_tests: [not_null]
+      - name: order_count
+        data_tests: [not_null]
+  - name: mart_product_sales
+    description: Branch/day/product sales mart.
+    columns:
+      - name: business_date
+        data_tests: [not_null]
+      - name: product_id
+        data_tests: [not_null]
+  - name: mart_inventory_position
+    description: Current branch/item/lot inventory position from the signed ledger.
+    columns:
+      - name: as_of_date
+        data_tests: [not_null]
+      - name: stock_item_id
+        data_tests: [not_null]
+  - name: mart_customer_360
+    description: Customer sales and loyalty summary.
+    columns:
+      - name: customer_id
+        data_tests: [not_null, unique]
+  - name: mart_cash_reconciliation
+    description: Shift-level cash drawer reconciliation.
+  - name: mart_procurement_status
+    description: Purchase-order-line fulfillment and unit comparability mart.
+    columns:
+      - name: purchase_order_item_id
+        data_tests: [not_null, unique]
+  - name: mart_daily_operations
+    description: Branch/day/unit production and waste mart; incompatible units are not summed together.
+    columns:
+      - name: business_date
+        data_tests: [not_null]
+      - name: uom_id
+        data_tests: [not_null]

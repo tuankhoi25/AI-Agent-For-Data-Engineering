@@ -1,0 +1,8 @@
+node_modules
+.next
+.env*
+agent/__pycache__
+**/*.pyc
+*.tsbuildinfo
+test
+.rollback

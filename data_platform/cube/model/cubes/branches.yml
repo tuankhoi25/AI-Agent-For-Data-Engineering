@@ -1,0 +1,57 @@
+cubes:
+  - name: branches
+    sql: SELECT * FROM bakery.branches WHERE NOT _is_deleted
+    data_source: default
+    refresh_key:
+      every: 1 minute
+    joins: []
+    dimensions:
+      - name: branch_id
+        sql: branch_id
+        type: number
+        primary_key: true
+      - name: branch_code
+        sql: branch_code
+        type: string
+      - name: branch_name
+        sql: branch_name
+        type: string
+      - name: address
+        sql: address
+        type: string
+      - name: phone
+        sql: phone
+        type: string
+      - name: timezone
+        sql: timezone
+        type: string
+      - name: opening_date
+        sql: opening_date
+        type: time
+      - name: is_active
+        sql: is_active
+        type: boolean
+      - name: notes
+        sql: notes
+        type: string
+      - name: created_at
+        sql: created_at
+        type: time
+      - name: _created_at
+        sql: _created_at
+        type: time
+      - name: _last_updated_at
+        sql: _last_updated_at
+        type: time
+      - name: _is_deleted
+        sql: _is_deleted
+        type: boolean
+      - name: _deleted_at
+        sql: _deleted_at
+        type: time
+    measures:
+      - name: count
+        type: count
+      - name: active_branches
+        type: sum
+        sql: CASE WHEN {CUBE}.is_active THEN 1 ELSE 0 END

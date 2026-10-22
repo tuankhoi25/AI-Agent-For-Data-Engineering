@@ -1,0 +1,51 @@
+cubes:
+  - name: sale_promotions
+    sql: SELECT * FROM bakery.sale_promotions WHERE NOT _is_deleted
+    data_source: default
+    refresh_key:
+      every: 1 minute
+    joins:
+      - name: promotions
+        sql: '{CUBE}.promotion_id = {promotions.promotion_id}'
+        relationship: many_to_one
+      - name: sales
+        sql: '{CUBE}.sale_id = {sales.sale_id}'
+        relationship: many_to_one
+    dimensions:
+      - name: sale_promotion_id
+        sql: sale_promotion_id
+        type: number
+        primary_key: true
+      - name: sale_id
+        sql: sale_id
+        type: number
+      - name: promotion_id
+        sql: promotion_id
+        type: number
+      - name: discount_amount
+        sql: discount_amount
+        type: number
+      - name: coupon_code
+        sql: coupon_code
+        type: string
+      - name: applied_at
+        sql: applied_at
+        type: time
+      - name: _created_at
+        sql: _created_at
+        type: time
+      - name: _last_updated_at
+        sql: _last_updated_at
+        type: time
+      - name: _is_deleted
+        sql: _is_deleted
+        type: boolean
+      - name: _deleted_at
+        sql: _deleted_at
+        type: time
+    measures:
+      - name: count
+        type: count
+      - name: promotion_discount_amount
+        type: sum
+        sql: discount_amount

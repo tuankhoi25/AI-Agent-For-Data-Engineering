@@ -1,0 +1,32 @@
+{
+  "name": "postgres",
+  "plugin_id": "postgresql",
+  "cron_expression": "0 2 * * 0",
+  "enabled": true,
+  "config": {
+    "host": "__POSTGRES_HOST__",
+    "port": "__POSTGRES_PORT__",
+    "database": "__POSTGRES_DB__",
+    "user": "__POSTGRES_USER__",
+    "password": "__POSTGRES_PASSWORD__",
+    "ssl_mode": "disable",
+    "include_columns": true,
+    "include_databases": false,
+    "discover_foreign_keys": true,
+    "enable_metrics": true,
+    "exclude_system_schemas": true,
+    "filter": {
+      "include": [
+        "^(branches|product_categories|units_of_measure|suppliers|customers|employees|allergens|stock_items|products|supplier_products|product_allergens|recipes|recipe_items|purchase_orders|purchase_order_items|goods_receipts|inventory_lots|goods_receipt_items|stock_movements|production_batches|production_consumptions|promotions|promotion_products|sales|sale_items|sale_promotions|payments|loyalty_transactions|returns|return_items|waste_records|shifts|cash_movements|weather_daily)$"
+      ],
+      "exclude": [
+        "^simulation_runs$"
+      ]
+    },
+    "tags": [
+      "postgres",
+      "weekly",
+      "sunday"
+    ]
+  }
+}

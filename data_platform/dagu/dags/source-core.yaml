@@ -1,0 +1,43 @@
+description: Ingest Bakery sources, conform current state, snapshot masters and seed holidays.
+schedule: "15 22 * * *"
+queue: bakery
+max_active_steps: 1
+timeout_sec: 7200
+working_dir: /opt/bakery
+labels:
+  project: bakery
+  purpose: elt-component
+params:
+  - name: BATCH_ID
+    type: string
+    default: auto
+env:
+  BAKERY_BATCH_ID: ${params.BATCH_ID}
+defaults:
+  retry_policy:
+    limit: 2
+    interval_sec: 60
+steps:
+  - id: preflight
+    run: python data_platform/dagu/pipeline.py preflight
+  - id: staging
+    run: python data_platform/dagu/pipeline.py staging
+    depends: [preflight]
+  - id: core
+    run: python data_platform/dagu/pipeline.py core
+    depends: [staging]
+  - id: snapshots
+    run: python data_platform/dagu/pipeline.py snapshots
+    depends: [core]
+  - id: calendar
+    run: python data_platform/dagu/pipeline.py calendar
+    depends: [snapshots]
+  - id: test
+    run: python data_platform/dagu/pipeline.py source-core-tests
+    depends: [calendar]
+  - id: publish
+    run: python data_platform/dagu/pipeline.py source-core-publish
+    depends: [test]
+  - id: metadata
+    run: python data_platform/dagu/catalog.py dagu
+    depends: [publish]

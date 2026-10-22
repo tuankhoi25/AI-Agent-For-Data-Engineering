@@ -1,0 +1,14 @@
+[[sources]]
+id = "cube_sql"
+description = "Cube SQL API over the bakery semantic model; not the source PostgreSQL database."
+dsn = "${DBHUB_CUBE_DSN}"
+
+[[tools]]
+name = "search_objects"
+source = "cube_sql"
+
+[[tools]]
+name = "execute_sql"
+source = "cube_sql"
+readonly = true
+max_rows = 1000

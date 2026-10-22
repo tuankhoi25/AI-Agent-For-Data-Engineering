@@ -1,0 +1,1932 @@
+# Analytics marts exposed by Cube through the existing PostgreSQL connector.
+# Dimensions intentionally include every physical column so Cube/DBHub can
+# query the complete analytics_mart surface. This file is generated from the
+# dbt catalog artifact; rerun the generator when mart columns change.
+cubes:
+  - name: dim_allergens
+    sql_table: analytics_mart.dim_allergens
+    data_source: default
+    refresh_key:
+      every: 1 minute
+    joins: []
+    dimensions:
+      - name: allergen_sk
+        sql: allergen_sk
+        type: number
+      - name: _dimension_version_id
+        sql: _dimension_version_id
+        type: string
+        primary_key: true
+      - name: allergen_id
+        sql: allergen_id
+        type: number
+      - name: allergen_code
+        sql: allergen_code
+        type: string
+      - name: allergen_name
+        sql: allergen_name
+        type: string
+      - name: _valid_from
+        sql: _valid_from
+        type: time
+      - name: _observed_from
+        sql: _observed_from
+        type: time
+      - name: _valid_to
+        sql: _valid_to
+        type: time
+      - name: _is_current
+        sql: _is_current
+        type: boolean
+      - name: _created_at
+        sql: _created_at
+        type: time
+      - name: _last_updated_at
+        sql: _last_updated_at
+        type: time
+      - name: _is_deleted
+        sql: _is_deleted
+        type: boolean
+      - name: _deleted_at
+        sql: _deleted_at
+        type: time
+      - name: _source_last_updated_at
+        sql: _source_last_updated_at
+        type: time
+      - name: _source_ingested_at
+        sql: _source_ingested_at
+        type: time
+      - name: _record_updated_at
+        sql: _record_updated_at
+        type: time
+    measures:
+      - name: count
+        type: count
+  - name: dim_date
+    sql_table: analytics_mart.dim_date
+    data_source: default
+    refresh_key:
+      every: 1 minute
+    joins: []
+    dimensions:
+      - name: date_sk
+        sql: date_sk
+        type: number
+        primary_key: true
+      - name: date_day
+        sql: date_day
+        type: time
+      - name: iso_day_of_week
+        sql: iso_day_of_week
+        type: number
+      - name: day_name
+        sql: day_name
+        type: string
+      - name: day_of_month
+        sql: day_of_month
+        type: number
+      - name: day_of_year
+        sql: day_of_year
+        type: number
+      - name: iso_week_of_year
+        sql: iso_week_of_year
+        type: number
+      - name: month_number
+        sql: month_number
+        type: number
+      - name: month_name
+        sql: month_name
+        type: string
+      - name: quarter_number
+        sql: quarter_number
+        type: number
+      - name: calendar_year
+        sql: calendar_year
+        type: number
+      - name: month_start_date
+        sql: month_start_date
+        type: time
+      - name: month_end_date
+        sql: month_end_date
+        type: time
+      - name: is_weekend
+        sql: is_weekend
+        type: boolean
+      - name: day_type
+        sql: day_type
+        type: string
+      - name: is_vietnam_holiday
+        sql: is_vietnam_holiday
+        type: boolean
+      - name: holiday_name
+        sql: holiday_name
+        type: string
+      - name: timezone
+        sql: timezone
+        type: string
+      - name: _record_updated_at
+        sql: _record_updated_at
+        type: time
+    measures:
+      - name: count
+        type: count
+  - name: fct_daily_weather
+    sql_table: analytics_mart.fct_daily_weather
+    data_source: default
+    refresh_key:
+      every: 1 minute
+    joins: []
+    dimensions:
+      - name: _cube_row_key
+        sql: 'md5(concat_ws(''|'', CAST(date_sk AS text), CAST(weather_date AS text), CAST(location_code AS text), CAST(weather_source AS text)))'
+        type: string
+        primary_key: true
+      - name: date_sk
+        sql: date_sk
+        type: number
+      - name: weather_date
+        sql: weather_date
+        type: time
+      - name: location_code
+        sql: location_code
+        type: string
+      - name: location_name
+        sql: location_name
+        type: string
+      - name: latitude
+        sql: latitude
+        type: number
+      - name: longitude
+        sql: longitude
+        type: number
+      - name: timezone
+        sql: timezone
+        type: string
+      - name: weather_source
+        sql: weather_source
+        type: string
+      - name: weather_model
+        sql: weather_model
+        type: string
+      - name: source_url
+        sql: source_url
+        type: string
+      - name: temperature_mean_c
+        sql: temperature_mean_c
+        type: number
+      - name: temperature_max_c
+        sql: temperature_max_c
+        type: number
+      - name: temperature_min_c
+        sql: temperature_min_c
+        type: number
+      - name: apparent_temperature_mean_c
+        sql: apparent_temperature_mean_c
+        type: number
+      - name: apparent_temperature_max_c
+        sql: apparent_temperature_max_c
+        type: number
+      - name: apparent_temperature_min_c
+        sql: apparent_temperature_min_c
+        type: number
+      - name: relative_humidity_mean_pct
+        sql: relative_humidity_mean_pct
+        type: number
+      - name: relative_humidity_max_pct
+        sql: relative_humidity_max_pct
+        type: number
+      - name: relative_humidity_min_pct
+        sql: relative_humidity_min_pct
+        type: number
+      - name: precipitation_sum_mm
+        sql: precipitation_sum_mm
+        type: number
+      - name: rain_sum_mm
+        sql: rain_sum_mm
+        type: number
+      - name: snowfall_sum_cm
+        sql: snowfall_sum_cm
+        type: number
+      - name: precipitation_hours
+        sql: precipitation_hours
+        type: number
+      - name: weather_code
+        sql: weather_code
+        type: number
+      - name: sunrise_at
+        sql: sunrise_at
+        type: time
+      - name: sunset_at
+        sql: sunset_at
+        type: time
+      - name: daylight_duration_seconds
+        sql: daylight_duration_seconds
+        type: number
+      - name: sunshine_duration_seconds
+        sql: sunshine_duration_seconds
+        type: number
+      - name: wind_speed_max_kmh
+        sql: wind_speed_max_kmh
+        type: number
+      - name: wind_gusts_max_kmh
+        sql: wind_gusts_max_kmh
+        type: number
+      - name: wind_direction_dominant_deg
+        sql: wind_direction_dominant_deg
+        type: number
+      - name: shortwave_radiation_sum_mj_m2
+        sql: shortwave_radiation_sum_mj_m2
+        type: number
+      - name: api_fetched_at
+        sql: api_fetched_at
+        type: time
+      - name: _created_at
+        sql: _created_at
+        type: time
+      - name: _last_updated_at
+        sql: _last_updated_at
+        type: time
+      - name: _is_deleted
+        sql: _is_deleted
+        type: boolean
+      - name: _deleted_at
+        sql: _deleted_at
+        type: time
+      - name: _source_last_updated_at
+        sql: _source_last_updated_at
+        type: time
+      - name: _source_ingested_at
+        sql: _source_ingested_at
+        type: time
+      - name: _record_updated_at
+        sql: _record_updated_at
+        type: time
+    measures:
+      - name: count
+        type: count
+  - name: dim_branches
+    sql_table: analytics_mart.dim_branches
+    data_source: default
+    refresh_key:
+      every: 1 minute
+    joins: []
+    dimensions:
+      - name: branch_sk
+        sql: branch_sk
+        type: number
+      - name: _dimension_version_id
+        sql: _dimension_version_id
+        type: string
+        primary_key: true
+      - name: branch_id
+        sql: branch_id
+        type: number
+      - name: branch_code
+        sql: branch_code
+        type: string
+      - name: branch_name
+        sql: branch_name
+        type: string
+      - name: address
+        sql: address
+        type: string
+      - name: phone
+        sql: phone
+        type: string
+      - name: timezone
+        sql: timezone
+        type: string
+      - name: opening_date
+        sql: opening_date
+        type: time
+      - name: is_active
+        sql: is_active
+        type: boolean
+      - name: notes
+        sql: notes
+        type: string
+      - name: created_at
+        sql: created_at
+        type: time
+      - name: _valid_from
+        sql: _valid_from
+        type: time
+      - name: _observed_from
+        sql: _observed_from
+        type: time
+      - name: _valid_to
+        sql: _valid_to
+        type: time
+      - name: _is_current
+        sql: _is_current
+        type: boolean
+      - name: _created_at
+        sql: _created_at
+        type: time
+      - name: _last_updated_at
+        sql: _last_updated_at
+        type: time
+      - name: _is_deleted
+        sql: _is_deleted
+        type: boolean
+      - name: _deleted_at
+        sql: _deleted_at
+        type: time
+      - name: _source_last_updated_at
+        sql: _source_last_updated_at
+        type: time
+      - name: _source_ingested_at
+        sql: _source_ingested_at
+        type: time
+      - name: _record_updated_at
+        sql: _record_updated_at
+        type: time
+    measures:
+      - name: count
+        type: count
+  - name: dim_customers
+    sql_table: analytics_mart.dim_customers
+    data_source: default
+    refresh_key:
+      every: 1 minute
+    joins: []
+    dimensions:
+      - name: customer_sk
+        sql: customer_sk
+        type: number
+      - name: _dimension_version_id
+        sql: _dimension_version_id
+        type: string
+        primary_key: true
+      - name: customer_id
+        sql: customer_id
+        type: number
+      - name: customer_code
+        sql: customer_code
+        type: string
+      - name: full_name
+        sql: full_name
+        type: string
+      - name: phone
+        sql: phone
+        type: string
+      - name: email
+        sql: email
+        type: string
+      - name: date_of_birth
+        sql: date_of_birth
+        type: time
+      - name: joined_at
+        sql: joined_at
+        type: time
+      - name: marketing_consent
+        sql: marketing_consent
+        type: boolean
+      - name: is_active
+        sql: is_active
+        type: boolean
+      - name: notes
+        sql: notes
+        type: string
+      - name: _valid_from
+        sql: _valid_from
+        type: time
+      - name: _observed_from
+        sql: _observed_from
+        type: time
+      - name: _valid_to
+        sql: _valid_to
+        type: time
+      - name: _is_current
+        sql: _is_current
+        type: boolean
+      - name: _created_at
+        sql: _created_at
+        type: time
+      - name: _last_updated_at
+        sql: _last_updated_at
+        type: time
+      - name: _is_deleted
+        sql: _is_deleted
+        type: boolean
+      - name: _deleted_at
+        sql: _deleted_at
+        type: time
+      - name: _source_last_updated_at
+        sql: _source_last_updated_at
+        type: time
+      - name: _source_ingested_at
+        sql: _source_ingested_at
+        type: time
+      - name: _record_updated_at
+        sql: _record_updated_at
+        type: time
+    measures:
+      - name: count
+        type: count
+  - name: dim_employees
+    sql_table: analytics_mart.dim_employees
+    data_source: default
+    refresh_key:
+      every: 1 minute
+    joins: []
+    dimensions:
+      - name: employee_sk
+        sql: employee_sk
+        type: number
+      - name: _dimension_version_id
+        sql: _dimension_version_id
+        type: string
+        primary_key: true
+      - name: employee_id
+        sql: employee_id
+        type: number
+      - name: branch_id
+        sql: branch_id
+        type: number
+      - name: employee_code
+        sql: employee_code
+        type: string
+      - name: full_name
+        sql: full_name
+        type: string
+      - name: role_name
+        sql: role_name
+        type: string
+      - name: phone
+        sql: phone
+        type: string
+      - name: hired_on
+        sql: hired_on
+        type: time
+      - name: terminated_on
+        sql: terminated_on
+        type: time
+      - name: is_active
+        sql: is_active
+        type: boolean
+      - name: _valid_from
+        sql: _valid_from
+        type: time
+      - name: _observed_from
+        sql: _observed_from
+        type: time
+      - name: _valid_to
+        sql: _valid_to
+        type: time
+      - name: _is_current
+        sql: _is_current
+        type: boolean
+      - name: _created_at
+        sql: _created_at
+        type: time
+      - name: _last_updated_at
+        sql: _last_updated_at
+        type: time
+      - name: _is_deleted
+        sql: _is_deleted
+        type: boolean
+      - name: _deleted_at
+        sql: _deleted_at
+        type: time
+      - name: _source_last_updated_at
+        sql: _source_last_updated_at
+        type: time
+      - name: _source_ingested_at
+        sql: _source_ingested_at
+        type: time
+      - name: _record_updated_at
+        sql: _record_updated_at
+        type: time
+    measures:
+      - name: count
+        type: count
+  - name: dim_inventory_lots
+    sql_table: analytics_mart.dim_inventory_lots
+    data_source: default
+    refresh_key:
+      every: 1 minute
+    joins: []
+    dimensions:
+      - name: inventory_lot_sk
+        sql: inventory_lot_sk
+        type: number
+      - name: _dimension_version_id
+        sql: _dimension_version_id
+        type: string
+        primary_key: true
+      - name: inventory_lot_id
+        sql: inventory_lot_id
+        type: number
+      - name: stock_item_id
+        sql: stock_item_id
+        type: number
+      - name: stock_item_sk
+        sql: stock_item_sk
+        type: number
+      - name: stock_item_code
+        sql: stock_item_code
+        type: string
+      - name: stock_item_name
+        sql: stock_item_name
+        type: string
+      - name: lot_code
+        sql: lot_code
+        type: string
+      - name: supplier_lot_code
+        sql: supplier_lot_code
+        type: string
+      - name: goods_receipt_id
+        sql: goods_receipt_id
+        type: number
+      - name: manufactured_at
+        sql: manufactured_at
+        type: time
+      - name: received_at
+        sql: received_at
+        type: time
+      - name: expires_at
+        sql: expires_at
+        type: time
+      - name: unit_cost
+        sql: unit_cost
+        type: number
+      - name: notes
+        sql: notes
+        type: string
+      - name: _valid_from
+        sql: _valid_from
+        type: time
+      - name: _observed_from
+        sql: _observed_from
+        type: time
+      - name: _valid_to
+        sql: _valid_to
+        type: time
+      - name: _is_current
+        sql: _is_current
+        type: boolean
+      - name: _created_at
+        sql: _created_at
+        type: time
+      - name: _last_updated_at
+        sql: _last_updated_at
+        type: time
+      - name: _is_deleted
+        sql: _is_deleted
+        type: boolean
+      - name: _deleted_at
+        sql: _deleted_at
+        type: time
+      - name: _source_last_updated_at
+        sql: _source_last_updated_at
+        type: time
+      - name: _source_ingested_at
+        sql: _source_ingested_at
+        type: time
+      - name: _record_updated_at
+        sql: _record_updated_at
+        type: time
+    measures:
+      - name: count
+        type: count
+  - name: dim_product_categories
+    sql_table: analytics_mart.dim_product_categories
+    data_source: default
+    refresh_key:
+      every: 1 minute
+    joins: []
+    dimensions:
+      - name: category_sk
+        sql: category_sk
+        type: number
+      - name: _dimension_version_id
+        sql: _dimension_version_id
+        type: string
+        primary_key: true
+      - name: category_id
+        sql: category_id
+        type: number
+      - name: category_code
+        sql: category_code
+        type: string
+      - name: category_name
+        sql: category_name
+        type: string
+      - name: parent_category_id
+        sql: parent_category_id
+        type: number
+      - name: description
+        sql: description
+        type: string
+      - name: is_active
+        sql: is_active
+        type: boolean
+      - name: _valid_from
+        sql: _valid_from
+        type: time
+      - name: _observed_from
+        sql: _observed_from
+        type: time
+      - name: _valid_to
+        sql: _valid_to
+        type: time
+      - name: _is_current
+        sql: _is_current
+        type: boolean
+      - name: _created_at
+        sql: _created_at
+        type: time
+      - name: _last_updated_at
+        sql: _last_updated_at
+        type: time
+      - name: _is_deleted
+        sql: _is_deleted
+        type: boolean
+      - name: _deleted_at
+        sql: _deleted_at
+        type: time
+      - name: _source_last_updated_at
+        sql: _source_last_updated_at
+        type: time
+      - name: _source_ingested_at
+        sql: _source_ingested_at
+        type: time
+      - name: _record_updated_at
+        sql: _record_updated_at
+        type: time
+    measures:
+      - name: count
+        type: count
+  - name: dim_products
+    sql_table: analytics_mart.dim_products
+    data_source: default
+    refresh_key:
+      every: 1 minute
+    joins: []
+    dimensions:
+      - name: product_sk
+        sql: product_sk
+        type: number
+      - name: _dimension_version_id
+        sql: _dimension_version_id
+        type: string
+        primary_key: true
+      - name: product_id
+        sql: product_id
+        type: number
+      - name: sku
+        sql: sku
+        type: string
+      - name: product_name
+        sql: product_name
+        type: string
+      - name: category_id
+        sql: category_id
+        type: number
+      - name: category_sk
+        sql: category_sk
+        type: number
+      - name: category_code
+        sql: category_code
+        type: string
+      - name: category_name
+        sql: category_name
+        type: string
+      - name: product_type
+        sql: product_type
+        type: string
+      - name: sell_uom_id
+        sql: sell_uom_id
+        type: number
+      - name: sell_uom_sk
+        sql: sell_uom_sk
+        type: number
+      - name: sell_uom_code
+        sql: sell_uom_code
+        type: string
+      - name: stock_item_id
+        sql: stock_item_id
+        type: number
+      - name: stock_item_sk
+        sql: stock_item_sk
+        type: number
+      - name: stock_item_code
+        sql: stock_item_code
+        type: string
+      - name: stock_item_type
+        sql: stock_item_type
+        type: string
+      - name: description
+        sql: description
+        type: string
+      - name: ingredient_summary
+        sql: ingredient_summary
+        type: string
+      - name: unit_price
+        sql: unit_price
+        type: number
+      - name: is_active
+        sql: is_active
+        type: boolean
+      - name: available_from
+        sql: available_from
+        type: time
+      - name: available_to
+        sql: available_to
+        type: time
+      - name: created_at
+        sql: created_at
+        type: time
+      - name: _valid_from
+        sql: _valid_from
+        type: time
+      - name: _observed_from
+        sql: _observed_from
+        type: time
+      - name: _valid_to
+        sql: _valid_to
+        type: time
+      - name: _is_current
+        sql: _is_current
+        type: boolean
+      - name: _created_at
+        sql: _created_at
+        type: time
+      - name: _last_updated_at
+        sql: _last_updated_at
+        type: time
+      - name: _is_deleted
+        sql: _is_deleted
+        type: boolean
+      - name: _deleted_at
+        sql: _deleted_at
+        type: time
+      - name: _source_last_updated_at
+        sql: _source_last_updated_at
+        type: time
+      - name: _source_ingested_at
+        sql: _source_ingested_at
+        type: time
+      - name: _record_updated_at
+        sql: _record_updated_at
+        type: time
+    measures:
+      - name: count
+        type: count
+  - name: dim_promotions
+    sql_table: analytics_mart.dim_promotions
+    data_source: default
+    refresh_key:
+      every: 1 minute
+    joins: []
+    dimensions:
+      - name: promotion_sk
+        sql: promotion_sk
+        type: number
+      - name: _dimension_version_id
+        sql: _dimension_version_id
+        type: string
+        primary_key: true
+      - name: promotion_id
+        sql: promotion_id
+        type: number
+      - name: promotion_code
+        sql: promotion_code
+        type: string
+      - name: promotion_name
+        sql: promotion_name
+        type: string
+      - name: promotion_type
+        sql: promotion_type
+        type: string
+      - name: discount_value
+        sql: discount_value
+        type: number
+      - name: minimum_order_amount
+        sql: minimum_order_amount
+        type: number
+      - name: starts_at
+        sql: starts_at
+        type: time
+      - name: ends_at
+        sql: ends_at
+        type: time
+      - name: max_uses
+        sql: max_uses
+        type: number
+      - name: is_active
+        sql: is_active
+        type: boolean
+      - name: _valid_from
+        sql: _valid_from
+        type: time
+      - name: _observed_from
+        sql: _observed_from
+        type: time
+      - name: _valid_to
+        sql: _valid_to
+        type: time
+      - name: _is_current
+        sql: _is_current
+        type: boolean
+      - name: _created_at
+        sql: _created_at
+        type: time
+      - name: _last_updated_at
+        sql: _last_updated_at
+        type: time
+      - name: _is_deleted
+        sql: _is_deleted
+        type: boolean
+      - name: _deleted_at
+        sql: _deleted_at
+        type: time
+      - name: _source_last_updated_at
+        sql: _source_last_updated_at
+        type: time
+      - name: _source_ingested_at
+        sql: _source_ingested_at
+        type: time
+      - name: _record_updated_at
+        sql: _record_updated_at
+        type: time
+    measures:
+      - name: count
+        type: count
+  - name: dim_recipes
+    sql_table: analytics_mart.dim_recipes
+    data_source: default
+    refresh_key:
+      every: 1 minute
+    joins: []
+    dimensions:
+      - name: recipe_sk
+        sql: recipe_sk
+        type: number
+      - name: _dimension_version_id
+        sql: _dimension_version_id
+        type: string
+        primary_key: true
+      - name: recipe_id
+        sql: recipe_id
+        type: number
+      - name: product_id
+        sql: product_id
+        type: number
+      - name: product_sk
+        sql: product_sk
+        type: number
+      - name: sku
+        sql: sku
+        type: string
+      - name: product_name
+        sql: product_name
+        type: string
+      - name: recipe_version
+        sql: recipe_version
+        type: string
+      - name: yield_quantity
+        sql: yield_quantity
+        type: number
+      - name: yield_uom_id
+        sql: yield_uom_id
+        type: number
+      - name: yield_uom_sk
+        sql: yield_uom_sk
+        type: number
+      - name: yield_uom_code
+        sql: yield_uom_code
+        type: string
+      - name: effective_from
+        sql: effective_from
+        type: time
+      - name: effective_to
+        sql: effective_to
+        type: time
+      - name: instructions
+        sql: instructions
+        type: string
+      - name: is_active
+        sql: is_active
+        type: boolean
+      - name: _valid_from
+        sql: _valid_from
+        type: time
+      - name: _observed_from
+        sql: _observed_from
+        type: time
+      - name: _valid_to
+        sql: _valid_to
+        type: time
+      - name: _is_current
+        sql: _is_current
+        type: boolean
+      - name: _created_at
+        sql: _created_at
+        type: time
+      - name: _last_updated_at
+        sql: _last_updated_at
+        type: time
+      - name: _is_deleted
+        sql: _is_deleted
+        type: boolean
+      - name: _deleted_at
+        sql: _deleted_at
+        type: time
+      - name: _source_last_updated_at
+        sql: _source_last_updated_at
+        type: time
+      - name: _source_ingested_at
+        sql: _source_ingested_at
+        type: time
+      - name: _record_updated_at
+        sql: _record_updated_at
+        type: time
+    measures:
+      - name: count
+        type: count
+  - name: dim_stock_items
+    sql_table: analytics_mart.dim_stock_items
+    data_source: default
+    refresh_key:
+      every: 1 minute
+    joins: []
+    dimensions:
+      - name: stock_item_sk
+        sql: stock_item_sk
+        type: number
+      - name: _dimension_version_id
+        sql: _dimension_version_id
+        type: string
+        primary_key: true
+      - name: stock_item_id
+        sql: stock_item_id
+        type: number
+      - name: stock_item_code
+        sql: stock_item_code
+        type: string
+      - name: stock_item_name
+        sql: stock_item_name
+        type: string
+      - name: item_type
+        sql: item_type
+        type: string
+      - name: base_uom_id
+        sql: base_uom_id
+        type: number
+      - name: base_uom_sk
+        sql: base_uom_sk
+        type: number
+      - name: base_uom_code
+        sql: base_uom_code
+        type: string
+      - name: base_uom_dimension
+        sql: base_uom_dimension
+        type: string
+      - name: track_lot
+        sql: track_lot
+        type: boolean
+      - name: track_expiry
+        sql: track_expiry
+        type: boolean
+      - name: reorder_level
+        sql: reorder_level
+        type: number
+      - name: is_active
+        sql: is_active
+        type: boolean
+      - name: notes
+        sql: notes
+        type: string
+      - name: _valid_from
+        sql: _valid_from
+        type: time
+      - name: _observed_from
+        sql: _observed_from
+        type: time
+      - name: _valid_to
+        sql: _valid_to
+        type: time
+      - name: _is_current
+        sql: _is_current
+        type: boolean
+      - name: _created_at
+        sql: _created_at
+        type: time
+      - name: _last_updated_at
+        sql: _last_updated_at
+        type: time
+      - name: _is_deleted
+        sql: _is_deleted
+        type: boolean
+      - name: _deleted_at
+        sql: _deleted_at
+        type: time
+      - name: _source_last_updated_at
+        sql: _source_last_updated_at
+        type: time
+      - name: _source_ingested_at
+        sql: _source_ingested_at
+        type: time
+      - name: _record_updated_at
+        sql: _record_updated_at
+        type: time
+    measures:
+      - name: count
+        type: count
+  - name: dim_suppliers
+    sql_table: analytics_mart.dim_suppliers
+    data_source: default
+    refresh_key:
+      every: 1 minute
+    joins: []
+    dimensions:
+      - name: supplier_sk
+        sql: supplier_sk
+        type: number
+      - name: _dimension_version_id
+        sql: _dimension_version_id
+        type: string
+        primary_key: true
+      - name: supplier_id
+        sql: supplier_id
+        type: number
+      - name: supplier_code
+        sql: supplier_code
+        type: string
+      - name: supplier_name
+        sql: supplier_name
+        type: string
+      - name: supplier_type
+        sql: supplier_type
+        type: string
+      - name: country_code
+        sql: country_code
+        type: string
+      - name: website
+        sql: website
+        type: string
+      - name: phone
+        sql: phone
+        type: string
+      - name: email
+        sql: email
+        type: string
+      - name: address
+        sql: address
+        type: string
+      - name: is_active
+        sql: is_active
+        type: boolean
+      - name: notes
+        sql: notes
+        type: string
+      - name: _valid_from
+        sql: _valid_from
+        type: time
+      - name: _observed_from
+        sql: _observed_from
+        type: time
+      - name: _valid_to
+        sql: _valid_to
+        type: time
+      - name: _is_current
+        sql: _is_current
+        type: boolean
+      - name: _created_at
+        sql: _created_at
+        type: time
+      - name: _last_updated_at
+        sql: _last_updated_at
+        type: time
+      - name: _is_deleted
+        sql: _is_deleted
+        type: boolean
+      - name: _deleted_at
+        sql: _deleted_at
+        type: time
+      - name: _source_last_updated_at
+        sql: _source_last_updated_at
+        type: time
+      - name: _source_ingested_at
+        sql: _source_ingested_at
+        type: time
+      - name: _record_updated_at
+        sql: _record_updated_at
+        type: time
+    measures:
+      - name: count
+        type: count
+  - name: dim_units_of_measure
+    sql_table: analytics_mart.dim_units_of_measure
+    data_source: default
+    refresh_key:
+      every: 1 minute
+    joins: []
+    dimensions:
+      - name: uom_sk
+        sql: uom_sk
+        type: number
+      - name: _dimension_version_id
+        sql: _dimension_version_id
+        type: string
+        primary_key: true
+      - name: uom_id
+        sql: uom_id
+        type: number
+      - name: uom_code
+        sql: uom_code
+        type: string
+      - name: uom_name
+        sql: uom_name
+        type: string
+      - name: dimension
+        sql: dimension
+        type: string
+      - name: is_base_unit
+        sql: is_base_unit
+        type: boolean
+      - name: _valid_from
+        sql: _valid_from
+        type: time
+      - name: _observed_from
+        sql: _observed_from
+        type: time
+      - name: _valid_to
+        sql: _valid_to
+        type: time
+      - name: _is_current
+        sql: _is_current
+        type: boolean
+      - name: _created_at
+        sql: _created_at
+        type: time
+      - name: _last_updated_at
+        sql: _last_updated_at
+        type: time
+      - name: _is_deleted
+        sql: _is_deleted
+        type: boolean
+      - name: _deleted_at
+        sql: _deleted_at
+        type: time
+      - name: _source_last_updated_at
+        sql: _source_last_updated_at
+        type: time
+      - name: _source_ingested_at
+        sql: _source_ingested_at
+        type: time
+      - name: _record_updated_at
+        sql: _record_updated_at
+        type: time
+    measures:
+      - name: count
+        type: count
+  - name: fct_sales
+    sql_table: analytics_mart.fct_sales
+    data_source: default
+    refresh_key:
+      every: 1 minute
+    joins: []
+    dimensions:
+      - name: sale_id
+        sql: sale_id
+        type: number
+        primary_key: true
+      - name: receipt_number
+        sql: receipt_number
+        type: string
+      - name: branch_id
+        sql: branch_id
+        type: number
+      - name: branch_sk
+        sql: branch_sk
+        type: number
+      - name: branch_code
+        sql: branch_code
+        type: string
+      - name: branch_name
+        sql: branch_name
+        type: string
+      - name: customer_id
+        sql: customer_id
+        type: number
+      - name: customer_sk
+        sql: customer_sk
+        type: number
+      - name: customer_code
+        sql: customer_code
+        type: string
+      - name: cashier_id
+        sql: cashier_id
+        type: number
+      - name: employee_sk
+        sql: employee_sk
+        type: number
+      - name: cashier_employee_code
+        sql: cashier_employee_code
+        type: string
+      - name: channel
+        sql: channel
+        type: string
+      - name: status
+        sql: status
+        type: string
+      - name: opened_at
+        sql: opened_at
+        type: time
+      - name: completed_at
+        sql: completed_at
+        type: time
+      - name: sale_occurred_at
+        sql: sale_occurred_at
+        type: time
+      - name: business_date
+        sql: business_date
+        type: time
+      - name: subtotal
+        sql: subtotal
+        type: number
+      - name: discount_total
+        sql: discount_total
+        type: number
+      - name: tax_total
+        sql: tax_total
+        type: number
+      - name: total_amount
+        sql: total_amount
+        type: number
+      - name: currency_code
+        sql: currency_code
+        type: string
+      - name: collected_payment_amount
+        sql: collected_payment_amount
+        type: number
+      - name: currently_captured_payment_amount
+        sql: currently_captured_payment_amount
+        type: number
+      - name: successful_payment_count
+        sql: successful_payment_count
+        type: number
+      - name: refund_amount
+        sql: refund_amount
+        type: number
+      - name: returned_quantity
+        sql: returned_quantity
+        type: number
+      - name: restocked_quantity
+        sql: restocked_quantity
+        type: number
+      - name: revenue_after_refund
+        sql: revenue_after_refund
+        type: number
+      - name: is_sale_completed
+        sql: is_sale_completed
+        type: boolean
+      - name: _created_at
+        sql: _created_at
+        type: time
+      - name: _last_updated_at
+        sql: _last_updated_at
+        type: time
+      - name: _is_deleted
+        sql: _is_deleted
+        type: boolean
+      - name: _deleted_at
+        sql: _deleted_at
+        type: time
+      - name: _record_updated_at
+        sql: _record_updated_at
+        type: time
+    measures:
+      - name: count
+        type: count
+  - name: fct_sale_items
+    sql_table: analytics_mart.fct_sale_items
+    data_source: default
+    refresh_key:
+      every: 1 minute
+    joins: []
+    dimensions:
+      - name: sale_item_id
+        sql: sale_item_id
+        type: number
+        primary_key: true
+      - name: sale_id
+        sql: sale_id
+        type: number
+      - name: receipt_number
+        sql: receipt_number
+        type: string
+      - name: branch_id
+        sql: branch_id
+        type: number
+      - name: branch_sk
+        sql: branch_sk
+        type: number
+      - name: branch_code
+        sql: branch_code
+        type: string
+      - name: branch_name
+        sql: branch_name
+        type: string
+      - name: customer_id
+        sql: customer_id
+        type: number
+      - name: customer_sk
+        sql: customer_sk
+        type: number
+      - name: business_date
+        sql: business_date
+        type: time
+      - name: sale_occurred_at
+        sql: sale_occurred_at
+        type: time
+      - name: channel
+        sql: channel
+        type: string
+      - name: sale_status
+        sql: sale_status
+        type: string
+      - name: product_id
+        sql: product_id
+        type: number
+      - name: product_sk
+        sql: product_sk
+        type: number
+      - name: sku
+        sql: sku
+        type: string
+      - name: product_name
+        sql: product_name
+        type: string
+      - name: category_code
+        sql: category_code
+        type: string
+      - name: category_name
+        sql: category_name
+        type: string
+      - name: product_type
+        sql: product_type
+        type: string
+      - name: sold_quantity
+        sql: sold_quantity
+        type: number
+      - name: uom_id
+        sql: uom_id
+        type: number
+      - name: uom_sk
+        sql: uom_sk
+        type: number
+      - name: uom_code
+        sql: uom_code
+        type: string
+      - name: product_name_snapshot
+        sql: product_name_snapshot
+        type: string
+      - name: unit_price
+        sql: unit_price
+        type: number
+      - name: gross_line_amount
+        sql: gross_line_amount
+        type: number
+      - name: discount_amount
+        sql: discount_amount
+        type: number
+      - name: line_total
+        sql: line_total
+        type: number
+      - name: returned_quantity
+        sql: returned_quantity
+        type: number
+      - name: restocked_quantity
+        sql: restocked_quantity
+        type: number
+      - name: refund_amount
+        sql: refund_amount
+        type: number
+      - name: net_quantity
+        sql: net_quantity
+        type: number
+      - name: net_line_sales_after_refund
+        sql: net_line_sales_after_refund
+        type: number
+      - name: is_sale_completed
+        sql: is_sale_completed
+        type: boolean
+      - name: _created_at
+        sql: _created_at
+        type: time
+      - name: _last_updated_at
+        sql: _last_updated_at
+        type: time
+      - name: _is_deleted
+        sql: _is_deleted
+        type: boolean
+      - name: _deleted_at
+        sql: _deleted_at
+        type: time
+      - name: _record_updated_at
+        sql: _record_updated_at
+        type: time
+    measures:
+      - name: count
+        type: count
+  - name: mart_cash_reconciliation
+    sql_table: analytics_mart.mart_cash_reconciliation
+    data_source: default
+    refresh_key:
+      every: 1 minute
+    joins: []
+    dimensions:
+      - name: shift_id
+        sql: shift_id
+        type: number
+        primary_key: true
+      - name: shift_code
+        sql: shift_code
+        type: string
+      - name: branch_id
+        sql: branch_id
+        type: number
+      - name: branch_code
+        sql: branch_code
+        type: string
+      - name: branch_name
+        sql: branch_name
+        type: string
+      - name: business_date
+        sql: business_date
+        type: time
+      - name: employee_id
+        sql: employee_id
+        type: number
+      - name: employee_code
+        sql: employee_code
+        type: string
+      - name: employee_name
+        sql: employee_name
+        type: string
+      - name: opened_at
+        sql: opened_at
+        type: time
+      - name: closed_at
+        sql: closed_at
+        type: time
+      - name: status
+        sql: status
+        type: string
+      - name: opening_cash
+        sql: opening_cash
+        type: number
+      - name: cash_in_amount
+        sql: cash_in_amount
+        type: number
+      - name: cash_out_amount
+        sql: cash_out_amount
+        type: number
+      - name: expected_ending_cash
+        sql: expected_ending_cash
+        type: number
+      - name: counted_cash
+        sql: counted_cash
+        type: number
+      - name: cash_variance
+        sql: cash_variance
+        type: number
+      - name: cash_movement_count
+        sql: cash_movement_count
+        type: number
+      - name: _record_updated_at
+        sql: _record_updated_at
+        type: time
+    measures:
+      - name: count
+        type: count
+  - name: mart_customer_360
+    sql_table: analytics_mart.mart_customer_360
+    data_source: default
+    refresh_key:
+      every: 1 minute
+    joins: []
+    dimensions:
+      - name: customer_id
+        sql: customer_id
+        type: number
+        primary_key: true
+      - name: customer_code
+        sql: customer_code
+        type: string
+      - name: full_name
+        sql: full_name
+        type: string
+      - name: phone
+        sql: phone
+        type: string
+      - name: email
+        sql: email
+        type: string
+      - name: joined_at
+        sql: joined_at
+        type: time
+      - name: marketing_consent
+        sql: marketing_consent
+        type: boolean
+      - name: is_active
+        sql: is_active
+        type: boolean
+      - name: order_count
+        sql: order_count
+        type: number
+      - name: receipt_revenue
+        sql: receipt_revenue
+        type: number
+      - name: refund_amount
+        sql: refund_amount
+        type: number
+      - name: net_revenue_after_refund
+        sql: net_revenue_after_refund
+        type: number
+      - name: first_sale_at
+        sql: first_sale_at
+        type: time
+      - name: last_sale_at
+        sql: last_sale_at
+        type: time
+      - name: current_points_balance
+        sql: current_points_balance
+        type: number
+      - name: has_purchased
+        sql: has_purchased
+        type: boolean
+      - name: _record_updated_at
+        sql: _record_updated_at
+        type: time
+    measures:
+      - name: count
+        type: count
+  - name: mart_daily_operations
+    sql_table: analytics_mart.mart_daily_operations
+    data_source: default
+    refresh_key:
+      every: 1 minute
+    joins: []
+    dimensions:
+      - name: _cube_row_key
+        sql: 'md5(concat_ws(''|'', CAST(business_date AS text), CAST(branch_id AS text), CAST(uom_id AS text)))'
+        type: string
+        primary_key: true
+      - name: business_date
+        sql: business_date
+        type: time
+      - name: branch_id
+        sql: branch_id
+        type: number
+      - name: uom_id
+        sql: uom_id
+        type: number
+      - name: uom_code
+        sql: uom_code
+        type: string
+      - name: branch_code
+        sql: branch_code
+        type: string
+      - name: branch_name
+        sql: branch_name
+        type: string
+      - name: completed_batch_count
+        sql: completed_batch_count
+        type: number
+      - name: planned_output_quantity
+        sql: planned_output_quantity
+        type: number
+      - name: produced_output_quantity
+        sql: produced_output_quantity
+        type: number
+      - name: avg_production_duration_minutes
+        sql: avg_production_duration_minutes
+        type: number
+      - name: waste_record_count
+        sql: waste_record_count
+        type: number
+      - name: wasted_quantity
+        sql: wasted_quantity
+        type: number
+      - name: _record_updated_at
+        sql: _record_updated_at
+        type: time
+    measures:
+      - name: count
+        type: count
+  - name: mart_daily_sales
+    sql_table: analytics_mart.mart_daily_sales
+    data_source: default
+    refresh_key:
+      every: 1 minute
+    joins: []
+    dimensions:
+      - name: _cube_row_key
+        sql: 'md5(concat_ws(''|'', CAST(business_date AS text), CAST(branch_id AS text)))'
+        type: string
+        primary_key: true
+      - name: business_date
+        sql: business_date
+        type: time
+      - name: branch_id
+        sql: branch_id
+        type: number
+      - name: branch_code
+        sql: branch_code
+        type: string
+      - name: branch_name
+        sql: branch_name
+        type: string
+      - name: order_count
+        sql: order_count
+        type: number
+      - name: identified_customer_order_count
+        sql: identified_customer_order_count
+        type: number
+      - name: gross_sales
+        sql: gross_sales
+        type: number
+      - name: discount_amount
+        sql: discount_amount
+        type: number
+      - name: tax_amount
+        sql: tax_amount
+        type: number
+      - name: receipt_revenue
+        sql: receipt_revenue
+        type: number
+      - name: refund_amount
+        sql: refund_amount
+        type: number
+      - name: net_revenue_after_refund
+        sql: net_revenue_after_refund
+        type: number
+      - name: collected_payment_amount
+        sql: collected_payment_amount
+        type: number
+      - name: currently_captured_payment_amount
+        sql: currently_captured_payment_amount
+        type: number
+      - name: average_ticket
+        sql: average_ticket
+        type: number
+      - name: first_sale_at
+        sql: first_sale_at
+        type: time
+      - name: last_sale_at
+        sql: last_sale_at
+        type: time
+      - name: _record_updated_at
+        sql: _record_updated_at
+        type: time
+    measures:
+      - name: count
+        type: count
+  - name: mart_inventory_position
+    sql_table: analytics_mart.mart_inventory_position
+    data_source: default
+    refresh_key:
+      every: 1 minute
+    joins: []
+    dimensions:
+      - name: _cube_row_key
+        sql: 'md5(concat_ws(''|'', CAST(branch_id AS text), CAST(stock_item_id AS text), CAST(inventory_lot_id AS text)))'
+        type: string
+        primary_key: true
+      - name: as_of_date
+        sql: as_of_date
+        type: time
+      - name: branch_id
+        sql: branch_id
+        type: number
+      - name: branch_code
+        sql: branch_code
+        type: string
+      - name: branch_name
+        sql: branch_name
+        type: string
+      - name: stock_item_id
+        sql: stock_item_id
+        type: number
+      - name: stock_item_code
+        sql: stock_item_code
+        type: string
+      - name: stock_item_name
+        sql: stock_item_name
+        type: string
+      - name: item_type
+        sql: item_type
+        type: string
+      - name: base_uom_code
+        sql: base_uom_code
+        type: string
+      - name: inventory_lot_id
+        sql: inventory_lot_id
+        type: number
+      - name: lot_code
+        sql: lot_code
+        type: string
+      - name: manufactured_at
+        sql: manufactured_at
+        type: time
+      - name: received_at
+        sql: received_at
+        type: time
+      - name: expires_at
+        sql: expires_at
+        type: time
+      - name: unit_cost
+        sql: unit_cost
+        type: number
+      - name: movement_uom_code
+        sql: movement_uom_code
+        type: string
+      - name: on_hand_quantity
+        sql: on_hand_quantity
+        type: number
+      - name: positive_on_hand_quantity
+        sql: positive_on_hand_quantity
+        type: number
+      - name: available_quantity
+        sql: available_quantity
+        type: number
+      - name: is_expired_as_of_run
+        sql: is_expired_as_of_run
+        type: boolean
+      - name: _record_updated_at
+        sql: _record_updated_at
+        type: time
+    measures:
+      - name: count
+        type: count
+  - name: mart_procurement_status
+    sql_table: analytics_mart.mart_procurement_status
+    data_source: default
+    refresh_key:
+      every: 1 minute
+    joins: []
+    dimensions:
+      - name: purchase_order_item_id
+        sql: purchase_order_item_id
+        type: number
+        primary_key: true
+      - name: purchase_order_id
+        sql: purchase_order_id
+        type: number
+      - name: po_number
+        sql: po_number
+        type: string
+      - name: supplier_id
+        sql: supplier_id
+        type: number
+      - name: supplier_code
+        sql: supplier_code
+        type: string
+      - name: supplier_name
+        sql: supplier_name
+        type: string
+      - name: branch_id
+        sql: branch_id
+        type: number
+      - name: branch_code
+        sql: branch_code
+        type: string
+      - name: stock_item_id
+        sql: stock_item_id
+        type: number
+      - name: stock_item_code
+        sql: stock_item_code
+        type: string
+      - name: stock_item_name
+        sql: stock_item_name
+        type: string
+      - name: ordered_quantity
+        sql: ordered_quantity
+        type: number
+      - name: ordered_uom_id
+        sql: ordered_uom_id
+        type: number
+      - name: ordered_uom_code
+        sql: ordered_uom_code
+        type: string
+      - name: received_quantity_same_uom
+        sql: received_quantity_same_uom
+        type: number
+      - name: remaining_quantity_same_uom
+        sql: remaining_quantity_same_uom
+        type: number
+      - name: unit_mismatch_receipt_line_count
+        sql: unit_mismatch_receipt_line_count
+        type: number
+      - name: expected_unit_cost
+        sql: expected_unit_cost
+        type: number
+      - name: expected_line_amount
+        sql: expected_line_amount
+        type: number
+      - name: actual_received_amount
+        sql: actual_received_amount
+        type: number
+      - name: currency_code
+        sql: currency_code
+        type: string
+      - name: ordered_at
+        sql: ordered_at
+        type: time
+      - name: expected_at
+        sql: expected_at
+        type: time
+      - name: purchase_order_status
+        sql: purchase_order_status
+        type: string
+      - name: _record_updated_at
+        sql: _record_updated_at
+        type: time
+    measures:
+      - name: count
+        type: count
+  - name: mart_product_sales
+    sql_table: analytics_mart.mart_product_sales
+    data_source: default
+    refresh_key:
+      every: 1 minute
+    joins: []
+    dimensions:
+      - name: _cube_row_key
+        sql: 'md5(concat_ws(''|'', CAST(business_date AS text), CAST(branch_id AS text), CAST(product_id AS text), CAST(uom_code AS text)))'
+        type: string
+        primary_key: true
+      - name: business_date
+        sql: business_date
+        type: time
+      - name: branch_id
+        sql: branch_id
+        type: number
+      - name: branch_code
+        sql: branch_code
+        type: string
+      - name: branch_name
+        sql: branch_name
+        type: string
+      - name: product_id
+        sql: product_id
+        type: number
+      - name: sku
+        sql: sku
+        type: string
+      - name: product_name
+        sql: product_name
+        type: string
+      - name: category_code
+        sql: category_code
+        type: string
+      - name: category_name
+        sql: category_name
+        type: string
+      - name: product_type
+        sql: product_type
+        type: string
+      - name: uom_code
+        sql: uom_code
+        type: string
+      - name: sold_quantity
+        sql: sold_quantity
+        type: number
+      - name: returned_quantity
+        sql: returned_quantity
+        type: number
+      - name: net_quantity
+        sql: net_quantity
+        type: number
+      - name: gross_sales
+        sql: gross_sales
+        type: number
+      - name: line_discount_amount
+        sql: line_discount_amount
+        type: number
+      - name: net_line_sales_before_refund
+        sql: net_line_sales_before_refund
+        type: number
+      - name: refund_amount
+        sql: refund_amount
+        type: number
+      - name: net_line_sales_after_refund
+        sql: net_line_sales_after_refund
+        type: number
+      - name: order_count
+        sql: order_count
+        type: number
+      - name: sale_line_count
+        sql: sale_line_count
+        type: number
+      - name: _record_updated_at
+        sql: _record_updated_at
+        type: time
+    measures:
+      - name: count
+        type: count

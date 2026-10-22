@@ -1,0 +1,57 @@
+cubes:
+  - name: recipe_items
+    sql: SELECT * FROM bakery.recipe_items WHERE NOT _is_deleted
+    data_source: default
+    refresh_key:
+      every: 1 minute
+    joins:
+      - name: recipes
+        sql: '{CUBE}.recipe_id = {recipes.recipe_id}'
+        relationship: many_to_one
+      - name: stock_items
+        sql: '{CUBE}.stock_item_id = {stock_items.stock_item_id}'
+        relationship: many_to_one
+      - name: units_of_measure
+        sql: '{CUBE}.uom_id = {units_of_measure.uom_id}'
+        relationship: many_to_one
+    dimensions:
+      - name: recipe_item_id
+        sql: recipe_item_id
+        type: number
+        primary_key: true
+      - name: recipe_id
+        sql: recipe_id
+        type: number
+      - name: stock_item_id
+        sql: stock_item_id
+        type: number
+      - name: quantity
+        sql: quantity
+        type: number
+      - name: uom_id
+        sql: uom_id
+        type: number
+      - name: is_optional
+        sql: is_optional
+        type: boolean
+      - name: notes
+        sql: notes
+        type: string
+      - name: _created_at
+        sql: _created_at
+        type: time
+      - name: _last_updated_at
+        sql: _last_updated_at
+        type: time
+      - name: _is_deleted
+        sql: _is_deleted
+        type: boolean
+      - name: _deleted_at
+        sql: _deleted_at
+        type: time
+    measures:
+      - name: count
+        type: count
+      - name: ingredient_quantity
+        type: sum
+        sql: quantity
