@@ -12,3 +12,445 @@ name = "execute_sql"
 source = "cube_sql"
 readonly = true
 max_rows = 1000
+
+# Manager/stakeholder reporting. SQL belongs here; the agent supplies values only.
+# DBHub is pinned to 1.4.0, which supports readonly/max_rows on custom tools.
+# Dates below are inclusive local business dates, not UTC event timestamps.
+
+[[tools]]
+name = "get_reporting_coverage"
+description = "Check reporting data coverage before interpreting an empty period or making a current report. Returns first/last business date and latest source-change timestamp for sales and operations, plus inventory snapshot date and procurement/customer update timestamps. A source-change timestamp is NOT a successful ETL completion time. Missing days are not automatically zero sales. No arguments."
+source = "cube_sql"
+readonly = true
+max_rows = 10
+statement = """
+SELECT 'sales' AS dataset, MIN(business_date) AS first_business_date,
+       MAX(business_date) AS last_business_date, MAX(_record_updated_at) AS latest_source_change_at
+FROM mart_daily_sales
+UNION ALL
+SELECT 'products', MIN(business_date), MAX(business_date), MAX(_record_updated_at)
+FROM mart_product_sales
+UNION ALL
+SELECT 'operations', MIN(business_date), MAX(business_date), MAX(_record_updated_at)
+FROM mart_daily_operations
+UNION ALL
+SELECT 'cash', MIN(business_date), MAX(business_date), MAX(_record_updated_at)
+FROM mart_cash_reconciliation
+UNION ALL
+SELECT 'inventory_snapshot', MIN(as_of_date), MAX(as_of_date), MAX(_record_updated_at)
+FROM mart_inventory_position
+UNION ALL
+SELECT 'procurement', NULL, NULL, MAX(_record_updated_at) FROM mart_procurement_status
+UNION ALL
+SELECT 'customer_lifetime', NULL, NULL, MAX(_record_updated_at) FROM mart_customer_360
+"""
+
+[[tools]]
+name = "get_sales_summary"
+description = "Management sales KPIs for an inclusive business-date period, optionally one branch. Completed nondeleted receipts only; one row per currency. Returns orders, gross subtotal, discounts, tax, original receipt revenue, completed-return refunds, revenue after refunds, collected payments and weighted average ticket. Receipt revenue includes tax; after-refund revenue is NOT profit. Refunds belong to the ORIGINAL sale date, not refund-event date. An empty period returns no rows, not confirmed zero business activity."
+source = "cube_sql"
+readonly = true
+max_rows = 20
+statement = """
+SELECT currency_code, COUNT(*) AS order_count,
+       MIN(business_date) AS first_sale_date, MAX(business_date) AS last_sale_date,
+       SUM(subtotal) AS gross_sales, SUM(discount_total) AS discount_amount,
+       SUM(tax_total) AS tax_amount, SUM(total_amount) AS receipt_revenue,
+       SUM(refund_amount) AS refund_amount, SUM(revenue_after_refund) AS net_revenue_after_refund,
+       SUM(collected_payment_amount) AS collected_payment_amount,
+       SUM(total_amount) / NULLIF(COUNT(*), 0) AS average_ticket,
+       100.0 * SUM(refund_amount) / NULLIF(SUM(total_amount), 0) AS refund_to_receipt_pct
+FROM fct_sales
+WHERE is_sale_completed = true AND _is_deleted = false
+  AND business_date >= CAST($1 AS DATE) AND business_date < CAST($2 AS DATE) + INTERVAL '1 day'
+  AND ($3 = '' OR branch_code = $3)
+GROUP BY currency_code
+ORDER BY currency_code
+"""
+[[tools.parameters]]
+name = "start_date"
+type = "string"
+description = "Inclusive business date YYYY-MM-DD in Asia/Ho_Chi_Minh; must be <= end_date."
+[[tools.parameters]]
+name = "end_date"
+type = "string"
+description = "Inclusive business date YYYY-MM-DD in Asia/Ho_Chi_Minh."
+[[tools.parameters]]
+name = "branch_code"
+type = "string"
+description = "Exact branch code; empty string means all branches."
+default = ""
+
+[[tools]]
+name = "get_sales_comparison"
+description = "Compare sales KPIs for two explicit inclusive business-date periods, e.g. week over week or month over month. Returns current/previous rows per currency with orders, receipt revenue, refunds, after-refund revenue and weighted average ticket. Choose equal-length completed periods for fair comparisons. Refunds are attributed to original sale date. A missing period has no row; do not treat it as zero or calculate growth from missing/zero baseline. Compute change from the returned totals."
+source = "cube_sql"
+readonly = true
+max_rows = 40
+statement = """
+SELECT 'current' AS period, currency_code, COUNT(*) AS order_count,
+       MIN(business_date) AS first_sale_date, MAX(business_date) AS last_sale_date,
+       SUM(total_amount) AS receipt_revenue, SUM(refund_amount) AS refund_amount,
+       SUM(revenue_after_refund) AS net_revenue_after_refund,
+       SUM(total_amount) / NULLIF(COUNT(*), 0) AS average_ticket
+FROM fct_sales
+WHERE is_sale_completed = true AND _is_deleted = false
+  AND business_date >= CAST($1 AS DATE) AND business_date < CAST($2 AS DATE) + INTERVAL '1 day'
+  AND ($5 = '' OR branch_code = $5)
+GROUP BY currency_code
+UNION ALL
+SELECT 'previous', currency_code, COUNT(*), MIN(business_date), MAX(business_date),
+       SUM(total_amount), SUM(refund_amount), SUM(revenue_after_refund),
+       SUM(total_amount) / NULLIF(COUNT(*), 0)
+FROM fct_sales
+WHERE is_sale_completed = true AND _is_deleted = false
+  AND business_date >= CAST($3 AS DATE) AND business_date < CAST($4 AS DATE) + INTERVAL '1 day'
+  AND ($5 = '' OR branch_code = $5)
+GROUP BY currency_code
+"""
+[[tools.parameters]]
+name = "start_date"
+type = "string"
+description = "Current period inclusive start, YYYY-MM-DD, Asia/Ho_Chi_Minh."
+[[tools.parameters]]
+name = "end_date"
+type = "string"
+description = "Current period inclusive end, YYYY-MM-DD; >= start_date."
+[[tools.parameters]]
+name = "previous_start_date"
+type = "string"
+description = "Comparison period inclusive start, YYYY-MM-DD."
+[[tools.parameters]]
+name = "previous_end_date"
+type = "string"
+description = "Comparison period inclusive end, YYYY-MM-DD; >= previous_start_date."
+[[tools.parameters]]
+name = "branch_code"
+type = "string"
+description = "Exact branch code, or empty string for all branches."
+default = ""
+
+[[tools]]
+name = "get_sales_trend"
+description = "Daily sales trend for a business-date period and optional branch. Returns orders, receipt revenue, refunds, after-refund revenue and weighted average ticket per observed day. Completed receipts only. Missing dates remain missing; do not fill with zero without confirming coverage. Daily mart has no currency column: use only after confirming single-currency VND scope with get_sales_summary; otherwise use currency-separated fact queries. Refunds are on original sale date. Maximum 1000 observed days, so split longer periods."
+source = "cube_sql"
+readonly = true
+max_rows = 1000
+statement = """
+SELECT business_date, SUM(order_count) AS order_count,
+       SUM(receipt_revenue) AS receipt_revenue, SUM(discount_amount) AS discount_amount,
+       SUM(refund_amount) AS refund_amount, SUM(net_revenue_after_refund) AS net_revenue_after_refund,
+       SUM(receipt_revenue) / NULLIF(SUM(order_count), 0) AS average_ticket
+FROM mart_daily_sales
+WHERE business_date >= CAST($1 AS DATE) AND business_date < CAST($2 AS DATE) + INTERVAL '1 day'
+  AND ($3 = '' OR branch_code = $3)
+GROUP BY business_date ORDER BY business_date LIMIT 1000
+"""
+[[tools.parameters]]
+name = "start_date"
+type = "string"
+description = "Inclusive business date YYYY-MM-DD, Asia/Ho_Chi_Minh."
+[[tools.parameters]]
+name = "end_date"
+type = "string"
+description = "Inclusive business date YYYY-MM-DD; >= start_date."
+[[tools.parameters]]
+name = "branch_code"
+type = "string"
+description = "Exact branch code, or empty string for all branches."
+default = ""
+
+[[tools]]
+name = "get_branch_performance"
+description = "Rank branches by after-refund revenue for an inclusive business-date period. Completed nondeleted receipts only; currency is kept separate. Returns exact branch IDs/codes/names, orders, receipt revenue, discounts, refunds, after-refund revenue and weighted average ticket. Useful for best/worst-performing branches and branch comparison; revenue is NOT profit. Names reflect receipt-time SCD versions and may split a renamed branch. Returns up to 200 rows, ordered by currency then net revenue descending."
+source = "cube_sql"
+readonly = true
+max_rows = 200
+statement = """
+SELECT branch_id, branch_code, branch_name, currency_code, COUNT(*) AS order_count,
+       SUM(total_amount) AS receipt_revenue, SUM(discount_total) AS discount_amount,
+       SUM(refund_amount) AS refund_amount, SUM(revenue_after_refund) AS net_revenue_after_refund,
+       SUM(total_amount) / NULLIF(COUNT(*), 0) AS average_ticket
+FROM fct_sales
+WHERE is_sale_completed = true AND _is_deleted = false
+  AND business_date >= CAST($1 AS DATE) AND business_date < CAST($2 AS DATE) + INTERVAL '1 day'
+GROUP BY branch_id, branch_code, branch_name, currency_code
+ORDER BY currency_code, net_revenue_after_refund DESC, branch_id LIMIT 200
+"""
+[[tools.parameters]]
+name = "start_date"
+type = "string"
+description = "Inclusive business date YYYY-MM-DD, Asia/Ho_Chi_Minh."
+[[tools.parameters]]
+name = "end_date"
+type = "string"
+description = "Inclusive business date YYYY-MM-DD; >= start_date."
+
+[[tools]]
+name = "get_channel_performance"
+description = "Sales channel mix for a business-date period and optional branch, e.g. dine-in/takeaway/delivery. Completed nondeleted receipts; results grouped by channel and currency. Returns orders, original receipt revenue, refunds, after-refund revenue and weighted average ticket. Calculate channel shares within the same currency. No inference about channel profitability or commission costs."
+source = "cube_sql"
+readonly = true
+max_rows = 100
+statement = """
+SELECT channel, currency_code, COUNT(*) AS order_count,
+       SUM(total_amount) AS receipt_revenue, SUM(refund_amount) AS refund_amount,
+       SUM(revenue_after_refund) AS net_revenue_after_refund,
+       SUM(total_amount) / NULLIF(COUNT(*), 0) AS average_ticket
+FROM fct_sales
+WHERE is_sale_completed = true AND _is_deleted = false
+  AND business_date >= CAST($1 AS DATE) AND business_date < CAST($2 AS DATE) + INTERVAL '1 day'
+  AND ($3 = '' OR branch_code = $3)
+GROUP BY channel, currency_code ORDER BY currency_code, net_revenue_after_refund DESC LIMIT 100
+"""
+[[tools.parameters]]
+name = "start_date"
+type = "string"
+description = "Inclusive business date YYYY-MM-DD, Asia/Ho_Chi_Minh."
+[[tools.parameters]]
+name = "end_date"
+type = "string"
+description = "Inclusive business date YYYY-MM-DD; >= start_date."
+[[tools.parameters]]
+name = "branch_code"
+type = "string"
+description = "Exact branch code, or empty string for all branches."
+default = ""
+
+[[tools]]
+name = "get_product_performance"
+description = "Product ranking by net line sales after refunds for a business-date period and optional branch. Includes SKU/name/category, unit, sold/returned/net quantities, line discounts and refunds. Product-line revenue excludes receipt-level adjustments/tax and is NOT receipt revenue or profit. Keep different units separate. Does not include products with no completed sales, so cannot establish zero sellers. Mart is single-currency VND only; verify currency scope via get_sales_summary. For category totals request enough rows or use a separate semantic query; a top-N list is not an exhaustive category total."
+source = "cube_sql"
+readonly = true
+max_rows = 100
+statement = """
+SELECT product_id, sku, product_name, category_code, category_name, uom_code,
+       SUM(sold_quantity) AS sold_quantity, SUM(returned_quantity) AS returned_quantity,
+       SUM(net_quantity) AS net_quantity, SUM(gross_sales) AS gross_line_sales,
+       SUM(line_discount_amount) AS line_discount_amount, SUM(refund_amount) AS refund_amount,
+       SUM(net_line_sales_after_refund) AS net_line_sales_after_refund
+FROM mart_product_sales
+WHERE business_date >= CAST($1 AS DATE) AND business_date < CAST($2 AS DATE) + INTERVAL '1 day'
+  AND ($3 = '' OR branch_code = $3)
+GROUP BY product_id, sku, product_name, category_code, category_name, uom_code
+ORDER BY net_line_sales_after_refund DESC, product_id, uom_code
+LIMIT 100
+"""
+[[tools.parameters]]
+name = "start_date"
+type = "string"
+description = "Inclusive business date YYYY-MM-DD, Asia/Ho_Chi_Minh."
+[[tools.parameters]]
+name = "end_date"
+type = "string"
+description = "Inclusive business date YYYY-MM-DD; >= start_date."
+[[tools.parameters]]
+name = "branch_code"
+type = "string"
+description = "Exact branch code, or empty string for all branches."
+default = ""
+
+[[tools]]
+name = "get_customer_purchase_segments"
+description = "Customer repeat-purchase and anonymous-order mix WITHIN a requested period, optionally a branch. Returns segments identified_one_order, identified_repeat_in_period, anonymous, grouped by currency, with customer count, orders, receipt and after-refund revenue. Repeat means 2+ completed receipts WITHIN this window; it is NOT lifetime retention or new-vs-returning status. Anonymous identified_customer_count is zero; the number of anonymous people is unknown. No personal contact data."
+source = "cube_sql"
+readonly = true
+max_rows = 100
+statement = """
+WITH customers AS (
+  SELECT customer_id, currency_code, COUNT(*) AS orders,
+         SUM(total_amount) AS receipt_revenue, SUM(revenue_after_refund) AS net_revenue_after_refund
+  FROM fct_sales
+  WHERE is_sale_completed = true AND _is_deleted = false
+    AND business_date >= CAST($1 AS DATE) AND business_date < CAST($2 AS DATE) + INTERVAL '1 day'
+    AND ($3 = '' OR branch_code = $3)
+  GROUP BY customer_id, currency_code
+)
+SELECT CASE WHEN customer_id IS NULL THEN 'anonymous'
+            WHEN orders > 1 THEN 'identified_repeat_in_period' ELSE 'identified_one_order' END AS segment,
+       currency_code, COUNT(customer_id) AS identified_customer_count,
+       SUM(orders) AS order_count, SUM(receipt_revenue) AS receipt_revenue,
+       SUM(net_revenue_after_refund) AS net_revenue_after_refund
+FROM customers
+GROUP BY CASE WHEN customer_id IS NULL THEN 'anonymous'
+              WHEN orders > 1 THEN 'identified_repeat_in_period' ELSE 'identified_one_order' END, currency_code
+ORDER BY currency_code, segment LIMIT 100
+"""
+[[tools.parameters]]
+name = "start_date"
+type = "string"
+description = "Inclusive business date YYYY-MM-DD, Asia/Ho_Chi_Minh."
+[[tools.parameters]]
+name = "end_date"
+type = "string"
+description = "Inclusive business date YYYY-MM-DD; >= start_date."
+[[tools.parameters]]
+name = "branch_code"
+type = "string"
+description = "Exact branch code, or empty string for all branches."
+default = ""
+
+[[tools]]
+name = "get_inventory_position"
+description = "Current materialized inventory snapshot by branch/stock item/movement unit. Reports signed on-hand, positive quantity, usable nonexpired quantity and negative-lot count; includes snapshot date. Does NOT reconstruct historical inventory or guarantee live stock. Quantities must stay separated by stock item and unit. Use get_inventory_expiry for per-lot expiry alerts. Does NOT calculate reorder thresholds, days of cover or inventory value. Maximum 200 rows ordered by branch and item; report truncation when limit reached."
+source = "cube_sql"
+readonly = true
+max_rows = 200
+statement = """
+SELECT branch_code, branch_name, stock_item_id, stock_item_code, stock_item_name,
+       movement_uom_code, MIN(as_of_date) AS first_snapshot_date, MAX(as_of_date) AS last_snapshot_date,
+       SUM(on_hand_quantity) AS on_hand_quantity, SUM(positive_on_hand_quantity) AS positive_on_hand_quantity,
+       SUM(available_quantity) AS available_quantity,
+       SUM(CASE WHEN on_hand_quantity < 0 THEN 1 ELSE 0 END) AS negative_lot_count
+FROM mart_inventory_position
+WHERE ($1 = '' OR branch_code = $1) AND ($2 = '' OR stock_item_code = $2)
+GROUP BY branch_code, branch_name, stock_item_id, stock_item_code, stock_item_name, movement_uom_code
+ORDER BY branch_code, stock_item_code, movement_uom_code LIMIT 200
+"""
+[[tools.parameters]]
+name = "branch_code"
+type = "string"
+description = "Exact branch code, or empty string for all branches."
+default = ""
+[[tools.parameters]]
+name = "stock_item_code"
+type = "string"
+description = "Exact stock-item code, or empty string for all items."
+default = ""
+
+[[tools]]
+name = "get_inventory_expiry"
+description = "Expiry alerts for positive-on-hand lots in the current inventory snapshot: already expired before reference_date plus lots expiring on reference_date through days_ahead inclusive. Expiry follows the mart DATE convention (expiry day itself is not expired). Reference date classifies the existing snapshot; it does NOT reconstruct stock on that date. Returns lot/item/branch/unit, snapshot date, expiry status and positive quantity. Earliest expiry first; max 200 lots. No cost valuation because unit-cost compatibility is not guaranteed."
+source = "cube_sql"
+readonly = true
+max_rows = 200
+statement = """
+SELECT as_of_date AS snapshot_date, branch_code, branch_name, stock_item_code, stock_item_name,
+       inventory_lot_id, lot_code, movement_uom_code, on_hand_quantity, expires_at,
+       CASE WHEN expires_at < CAST($1 AS DATE) THEN 'expired' ELSE 'expiring_soon' END AS expiry_status
+FROM mart_inventory_position
+WHERE on_hand_quantity > 0 AND expires_at IS NOT NULL
+  AND expires_at < CAST($1 AS DATE) + (LEAST(GREATEST($2, 0), 365) + 1) * INTERVAL '1 day'
+  AND ($3 = '' OR branch_code = $3)
+ORDER BY expires_at, branch_code, stock_item_code, inventory_lot_id
+LIMIT 200
+"""
+[[tools.parameters]]
+name = "reference_date"
+type = "string"
+description = "Local date YYYY-MM-DD for classifying lot expiry, usually today, Asia/Ho_Chi_Minh."
+[[tools.parameters]]
+name = "days_ahead"
+type = "integer"
+description = "Expiry horizon in days, 0-365 inclusive; values are clamped. Includes already expired lots."
+default = 7
+[[tools.parameters]]
+name = "branch_code"
+type = "string"
+description = "Exact branch code, or empty string for all branches."
+default = ""
+
+[[tools]]
+name = "get_production_waste_summary"
+description = "Production and waste report by branch and UOM for a business-date period. Returns completed batches, planned/produced output, output attainment %, batch-weighted production minutes and recorded waste quantity/count. Keep units separate. Waste covers different stock items and is NOT necessarily waste from those completed batches: do NOT divide wasted quantity by produced output to claim a waste rate. Does not establish food cost, margin or reasons for waste. For item/reason drilldown use Cube/SQL. Up to 200 branch/unit rows."
+source = "cube_sql"
+readonly = true
+max_rows = 200
+statement = """
+SELECT branch_code, branch_name, uom_code, SUM(completed_batch_count) AS completed_batch_count,
+       SUM(planned_output_quantity) AS planned_output_quantity,
+       SUM(produced_output_quantity) AS produced_output_quantity,
+       100.0 * SUM(produced_output_quantity) / NULLIF(SUM(planned_output_quantity), 0) AS output_attainment_pct,
+       SUM(avg_production_duration_minutes * completed_batch_count) /
+         NULLIF(SUM(CASE WHEN avg_production_duration_minutes IS NOT NULL THEN completed_batch_count ELSE 0 END), 0)
+         AS batch_weighted_duration_minutes,
+       SUM(waste_record_count) AS waste_record_count, SUM(wasted_quantity) AS wasted_quantity
+FROM mart_daily_operations
+WHERE business_date >= CAST($1 AS DATE) AND business_date < CAST($2 AS DATE) + INTERVAL '1 day'
+  AND ($3 = '' OR branch_code = $3)
+GROUP BY branch_code, branch_name, uom_code ORDER BY branch_code, uom_code LIMIT 200
+"""
+[[tools.parameters]]
+name = "start_date"
+type = "string"
+description = "Inclusive business date YYYY-MM-DD, Asia/Ho_Chi_Minh."
+[[tools.parameters]]
+name = "end_date"
+type = "string"
+description = "Inclusive business date YYYY-MM-DD; >= start_date."
+[[tools.parameters]]
+name = "branch_code"
+type = "string"
+description = "Exact branch code, or empty string for all branches."
+default = ""
+
+[[tools]]
+name = "get_procurement_backlog"
+description = "Outstanding purchase-order LINES in the current fulfillment mart, ordered by expected delivery time. Excludes CANCELLED/CANCELED/DRAFT orders; includes partially received lines with remaining same-unit quantity > 0. Optionally only overdue at end of reference_date. Returns PO/supplier/branch/item, ordered unit, remaining quantity, currency, expected/received amounts, and mismatched-unit receipt count. Quantity with a mismatch is provisional, not a proven shortage. Does NOT reconstruct past PO status or establish accounts payable/supplier quality. Up to 200 lines; do not label line count as PO count."
+source = "cube_sql"
+readonly = true
+max_rows = 200
+statement = """
+SELECT purchase_order_item_id, purchase_order_id, po_number, purchase_order_status,
+       supplier_code, supplier_name, branch_code, stock_item_code, stock_item_name,
+       ordered_uom_code, ordered_quantity, received_quantity_same_uom, remaining_quantity_same_uom,
+       unit_mismatch_receipt_line_count, currency_code, expected_line_amount, actual_received_amount,
+       expected_at, _record_updated_at AS latest_source_change_at
+FROM mart_procurement_status
+WHERE remaining_quantity_same_uom > 0 AND purchase_order_status NOT IN ('CANCELLED', 'CANCELED', 'DRAFT')
+  AND ($2 = '' OR branch_code = $2)
+  AND COALESCE(expected_at, TIMESTAMP '9999-12-30') <
+      CASE WHEN CAST($3 AS BOOLEAN) THEN CAST($1 AS DATE) + INTERVAL '1 day'
+           ELSE TIMESTAMP '9999-12-31' END
+ORDER BY expected_at ASC NULLS LAST, purchase_order_id, purchase_order_item_id
+LIMIT 200
+"""
+[[tools.parameters]]
+name = "reference_date"
+type = "string"
+description = "Local date YYYY-MM-DD; overdue means expected before the NEXT local midnight. Current fulfillment is used even for past dates."
+[[tools.parameters]]
+name = "branch_code"
+type = "string"
+description = "Exact branch code, or empty string for all branches."
+default = ""
+[[tools.parameters]]
+name = "overdue_only"
+type = "boolean"
+description = "True for overdue lines only, false for all outstanding lines."
+default = true
+
+[[tools]]
+name = "get_cash_variances"
+description = "Cash-drawer discrepancies per CLOSED counted shift in a business-date period, optionally a branch. Returns expected/count cash and signed variance: positive = surplus, negative = shortage. Only absolute variance greater than tolerance, sorted by absolute size. Excludes uncounted/open shifts; card/transfers are NOT cash. Cash movement is not sales revenue. Mart has no currency column; deployment assumes VND cash. Maximum 200 shifts; this is an exception list, not an exhaustive reconciliation total."
+source = "cube_sql"
+readonly = true
+max_rows = 200
+statement = """
+SELECT shift_id, shift_code, branch_code, branch_name, business_date, employee_code,
+       opening_cash, cash_in_amount, cash_out_amount, expected_ending_cash, counted_cash, cash_variance,
+       ABS(cash_variance) AS absolute_cash_variance
+FROM mart_cash_reconciliation
+WHERE status = 'CLOSED' AND counted_cash IS NOT NULL
+  AND business_date >= CAST($1 AS DATE) AND business_date < CAST($2 AS DATE) + INTERVAL '1 day'
+  AND ($3 = '' OR branch_code = $3) AND ABS(cash_variance) > GREATEST($4, 0)
+ORDER BY absolute_cash_variance DESC, shift_id LIMIT 200
+"""
+[[tools.parameters]]
+name = "start_date"
+type = "string"
+description = "Inclusive business date YYYY-MM-DD, Asia/Ho_Chi_Minh."
+[[tools.parameters]]
+name = "end_date"
+type = "string"
+description = "Inclusive business date YYYY-MM-DD; >= start_date."
+[[tools.parameters]]
+name = "branch_code"
+type = "string"
+description = "Exact branch code, or empty string for all branches."
+default = ""
+[[tools.parameters]]
+name = "tolerance"
+type = "float"
+description = "Nonnegative variance tolerance in VND; only absolute variance strictly above this amount is returned."
+default = 0.0

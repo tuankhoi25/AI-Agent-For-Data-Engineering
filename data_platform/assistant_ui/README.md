@@ -2,7 +2,10 @@
 
 Default assistant-ui frontend, AG-UI streaming and the existing Python/LangChain agent.
 Marmot provides business context, Cube provides semantic queries, and DBHub provides SQL
-through Cube's PostgreSQL interface.
+through Cube's PostgreSQL interface. The agent serves stakeholders and managers;
+it prefers [13 curated DBHub reporting tools](../dbhub/README.md) for common
+management questions, supplying parameters without writing SQL. It uses Cube
+REST or ad hoc SQL for questions outside those reports' documented scope.
 
 ## Perspective visualization tools
 

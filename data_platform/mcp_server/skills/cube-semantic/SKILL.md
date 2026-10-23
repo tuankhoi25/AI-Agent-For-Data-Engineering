@@ -10,6 +10,11 @@ below use Cube's REST API. They do not read Marmot's business catalog and do not
 accept SQL. Use business definitions from Marmot when meaning or data grain is
 unclear.
 
+For common management reports covered by DBHub's named reporting tools, prefer
+those tools and pass their parameters directly. Inspect Cube members and build
+a REST query when the question falls outside the named reports' scope; do not
+recreate a curated report unnecessarily.
+
 ## `inspect_cube_model`
 
 Use without `cube_names` to list the available cubes. Supply a list of exact

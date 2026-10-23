@@ -6,7 +6,7 @@ The notebook client connects to three MCP endpoints:
 | --- | --- | --- |
 | Marmot | Nine catalog tools | Business definitions, source schemas, lineage, ownership and governance |
 | This service | `list_available_tables`, `inspect_cube_model`, `run_cube_query` | Table names and business descriptions from Marmot; available Cube members and structured semantic queries |
-| DBHub | `search_objects`, `execute_sql` | Explore and query Cube's SQL API, including supported CTEs and subqueries |
+| DBHub | 13 named reporting tools, `search_objects`, `execute_sql` | Curated management reports first; ad hoc Cube SQL when needed |
 
 Cube model metadata tells the agent what it can query. Marmot metadata explains
 what the data means. DBHub connects to Cube's PostgreSQL-compatible SQL endpoint,
@@ -20,8 +20,9 @@ by native MCP search listings. DBHub and Marmot also run their own MCP servers.
 Each service has one local skill in `skills/`. The notebook loads all three;
 the system prompt gives the agent its role and the skills describe tool scope
 and argument shapes. The agent selects a query interface according to the
-question and the available model. The skills are general tool instructions,
-not templates for particular bakery answers.
+question and the available model. Common stakeholder reports use the curated
+DBHub tools first, passing parameters without generating SQL. See
+[DBHub reports](../dbhub/README.md) for questions, metric contracts and tests.
 
 ## Examples
 

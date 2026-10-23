@@ -312,6 +312,13 @@ Các địa chỉ trên tương ứng cấu hình hiện tại; nếu đổi `.e
 Cube/DBHub truy vấn qua semantic layer; cache/rollup có chu kỳ refresh một phút,
 nên số liệu mới có thể chưa xuất hiện ngay sau khi ETL commit.
 
+Trợ lý phục vụ stakeholder và quản lý, ưu tiên **13 custom tool DBHub** cho
+báo cáo doanh thu, so sánh kỳ, chi nhánh/kênh/sản phẩm, khách mua lặp lại,
+tồn kho/hạn dùng, sản xuất/hao hụt, đơn mua chưa nhận đủ và lệch tiền ca.
+SQL được viết sẵn; agent chỉ chọn tool và truyền tham số. Câu hỏi ngoài phạm vi
+vẫn dùng Cube query hoặc SQL. Xem [bộ báo cáo DBHub](data_platform/dbhub/README.md)
+để biết câu hỏi mẫu, định nghĩa KPI, giới hạn dữ liệu và cách kiểm tra.
+
 ## 10. Vận hành hằng ngày và khởi động lại
 
 Khi dữ liệu đã được khởi tạo, bật lại toàn bộ dịch vụ bằng

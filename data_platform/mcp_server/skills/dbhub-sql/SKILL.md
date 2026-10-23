@@ -1,6 +1,6 @@
 ---
 name: dbhub-sql
-description: Explore Cube's PostgreSQL-compatible SQL surface through DBHub and run read-only SQL when structured Cube queries cannot express the analysis clearly.
+description: Prefer curated DBHub tools for management reports; use read-only Cube SQL for analyses outside their scope.
 ---
 
 # DBHub over Cube SQL API
@@ -11,9 +11,77 @@ SQL therefore sees Cube's exposed semantic model and is limited to the SQL
 features that this Cube deployment supports. Do not assume every PostgreSQL
 function, source table or source schema is available.
 
-Use DBHub when a question needs a CTE, subquery, window calculation or another
+## Management reports: named tools first
+
+This assistant serves managers and stakeholders. DBHub exposes curated reporting
+tools whose SQL is already written and parameterized in `data_platform/dbhub/dbhub.toml`.
+For a covered question, call the named tool directly with values; do not write SQL
+or inspect Cube schemas just to reproduce that report. Use Marmot to establish
+business meaning as needed; reuse sufficient context already retrieved.
+
+| Stakeholder question | Tool |
+| --- | --- |
+| What dates are available? Is today's report complete? | `get_reporting_coverage` (coverage only, not proof of pipeline success) |
+| Revenue, orders, discounts, refunds, average ticket? | `get_sales_summary` |
+| How did this period compare with the previous one? | `get_sales_comparison` |
+| What is the daily sales trend? | `get_sales_trend` |
+| Which branches perform best? | `get_branch_performance` |
+| Which sales channels contribute revenue? | `get_channel_performance` |
+| Which products sell best by net line revenue? | `get_product_performance` |
+| How many identified customers bought repeatedly within this period? | `get_customer_purchase_segments` |
+| What is our current stock by branch/item/unit? | `get_inventory_position` |
+| Which lots are expired or expiring soon? | `get_inventory_expiry` |
+| What output did production achieve, and how much waste was recorded? | `get_production_waste_summary` |
+| Which purchase-order lines remain outstanding or overdue? | `get_procurement_backlog` |
+| Which closed shifts have cash shortages or surpluses? | `get_cash_variances` |
+
+The named tools appear at runtime through the same DBHub MCP connection. If a
+tool is absent, disclose that limitation; do not claim it ran. Inputs contain
+dates, branch codes, horizons and limits, never SQL. Optional `branch_code=""`
+means all branches. Resolve branch names using `get_branch_performance` when
+needed; never invent a branch code. All business-date start/end ranges are
+inclusive and use Asia/Ho_Chi_Minh. Reject reversed date ranges before calling.
+For procurement, reference_date is an end-of-local-day cutoff. Do not label
+deliveries later today as already overdue; use yesterday for overdue as of
+the start of today, or a precise timestamp SQL query for overdue right now.
+
+For current/latest reports, consult coverage and explicitly state any gap
+between the requested dates and available data. Do not change the requested
+period silently or treat missing days as confirmed zeros. `latest_source_change_at`
+is a source-change watermark, not the last successful refresh time. Longer
+trend requests must be split into <=1000-day windows. Reaching any documented
+row limit means completeness has not been established; disclose or narrow the
+scope instead of computing full totals from a top-N/exception list.
+
+Sales summary/comparison/branch/channel/customer tools separate currencies.
+Trend and product marts lack a currency column: confirm single-currency VND
+scope with `get_sales_summary` before using their financial totals. Otherwise
+query currency-separated facts. Refunds in these sales tools are attributed
+to the original sale date, not the return event date. Receipt revenue includes
+tax and receipt-level adjustments; product-line sales do not. Average ticket
+is total receipt revenue / total orders, not an average of daily averages.
+After-refund revenue is not profit: these tools do not establish COGS, payroll,
+rent or a complete P&L. Calculate growth only with a nonmissing, nonzero baseline;
+keep the two periods and any unequal coverage explicit.
+
+Inventory is the latest materialized stock snapshot. A reference date on the
+expiry tool only classifies those existing lots; it cannot reconstruct past
+stock. Lots expiring on the reference date are not yet expired under the mart
+date rule. Keep units/item identities separate and do not infer inventory
+valuation, reorder alerts or days of cover from tools that do not return them.
+Usable stock is classified at snapshot date; stale snapshot dates must be
+disclosed. Procurement uses current fulfillment even for a past reference date;
+unit-mismatch lines do not prove a shortage. Waste spans stock items and is not
+a comparable numerator for production yield or a waste-rate denominator.
+Customer repeat segments are within-window repeat purchases, not lifetime
+retention or new-vs-returning classification. Anonymous order count does not
+establish a unique customer count.
+
+## Ad hoc queries
+
+Use DBHub's `execute_sql` when a question needs a CTE, subquery, window calculation or another
 SQL composition that is awkward or unavailable in Cube's structured REST
-query. A simple grouped measure query is usually clearer through
+query and no named report covers it. A simple grouped measure query outside the reports is usually clearer through
 `run_cube_query`. Marmot remains the source for business definitions and
 ownership; `inspect_cube_model` remains the source for available REST members.
 
